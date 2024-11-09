@@ -21,9 +21,8 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import Visitor from "./visitor";
 import { Comment, Poll } from "~/types";
-import "~/styles/CustomUnderline.css"
+import "~/styles/CustomUnderline.css";
 import { ConsoleLogWriter } from "drizzle-orm";
-
 
 const initialPolls: Poll[] = [
   {
@@ -108,19 +107,31 @@ export default function Polls() {
 
   console.log(polls, "polls");
 
-  const sortedPolls = [...polls].sort((a, b) => {
-    if (sortBy === "top") {
-      return b.votes[0] + b.votes[1] - (a.votes[0] + a.votes[1]);
-    } else {
-      return b.createdAt.getTime() - a.createdAt.getTime();
-    }
-  });
+  const [sortedPolls, setSortedPols] = useState<Poll[]>([]);
 
-  console.log(sortedPolls, "sortedPolls");
-  
+  // const sortedPolls = [...polls].sort((a, b) => {
+  //   if (sortBy === "top") {
+  //     return b.votes[0] + b.votes[1] - (a.votes[0] + a.votes[1]);
+  //   } else {
+  //     return b.createdAt.getTime() - a.createdAt.getTime();
+  //   }
+  // });
+
+  useEffect(() => {
+    setSortedPols(
+      [...polls].sort((a, b) => {
+        if (sortBy === "top") {
+          return b.votes[0] + b.votes[1] - (a.votes[0] + a.votes[1]);
+        } else {
+          return b.createdAt.getTime() - a.createdAt.getTime();
+        }
+      }),
+    );
+  }, [polls, sortBy]);
 
   const handleVote = (pollId: number, optionIndex: number) => {
-    const oldPoll = polls[pollId];
+    const oldPoll = sortedPolls.find((i) => i.id === pollId);
+
     if (oldPoll?.votes[optionIndex] === undefined) {
       return;
     }
@@ -137,15 +148,15 @@ export default function Polls() {
       justVoted: true,
     } satisfies Poll;
 
-    setPolls([...polls.filter((i) => i.id === pollId), updatedPoll]);
+    setPolls(() => [...polls.filter((i) => i.id !== pollId), updatedPoll]);
 
-    setTimeout(() => {
-      setPolls((polls) =>
-        polls.map((poll) =>
-          poll.id === pollId ? { ...poll, justVoted: false } : poll,
-        ),
-      );
-    }, 500);
+    // setTimeout(() => {
+    //   setPolls((polls) =>
+    //     polls.map((poll) =>
+    //       poll.id === pollId ? { ...poll, justVoted: false } : poll,
+    //     ),
+    //   );
+    // }, 500);
   };
 
   const handleAddComment = (
@@ -204,7 +215,9 @@ export default function Polls() {
 
   return (
     <div>
-      <h1 className="mb-4 text-4xl font-bold text-center h1class">Ongoing Polls</h1>
+      <h1 className="h1class mb-4 text-center text-4xl font-bold">
+        Ongoing Polls
+      </h1>
       <div className="mb-4 flex items-center">
         <span className="mr-2 text-sm font-medium">Sort by:</span>
         <Select
@@ -284,7 +297,7 @@ function PollItem({
               Vote to see the real results!
             </p>
             <div
-              className={`bg-[#FFA97A] border-l-2 border-amber-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+              className={`border-l-2 border-amber-500 bg-[#FFA97A] transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}
             />
           </div>
