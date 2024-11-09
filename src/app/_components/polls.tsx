@@ -22,6 +22,7 @@ import { env } from "~/env";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../_context/auth-context";
+import AnswerItem from "./answer-item";
 
 const fetchUnAnsweredPolls = async (userId: string) => {
   console.log("fetching polls", userId);
@@ -164,7 +165,11 @@ export default function Polls() {
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data: unansweredPolls,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["polls"],
     queryFn: () => fetchUnAnsweredPolls(userId!),
     enabled: isAuthenticated && !!userId,
@@ -278,13 +283,14 @@ export default function Polls() {
           <div>Loading...</div>
         ) : error ? (
           <div>{error.message}</div>
+        ) : !unansweredPolls ? (
+          <div>No polls available</div>
         ) : (
-          data?.map((poll) => (
+          unansweredPolls.map((poll) => (
             <PollItem
               key={poll.id}
               poll={poll}
               onSelect={() => {
-                console.log(poll.id);
                 handlePush(poll.id);
                 setSelectedPoll(poll);
               }}
@@ -292,6 +298,9 @@ export default function Polls() {
             />
           ))
         )}
+        {userAnswers?.map((answer) => (
+          <AnswerItem key={answer.id} answer={answer} />
+        ))}
       </div>
     </div>
   );
