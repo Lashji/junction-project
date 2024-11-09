@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { ArrowUpDown, BadgeCheck, MessageSquare } from "lucide-react";
+import { ArrowUpDown, BadgeCheck, MessageSquare, OctagonAlert, Sparkle, Vote } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   type Poll,
@@ -346,27 +346,38 @@ function PollItem({
       onClick={onSelect}
     >
 
-      {
-        true &&
+      <div className="flex items-center justify-between">
+        <h2 className="content-lg text-xl mb-2 font-semibold">{poll.title}</h2>
 
-        <div className="flex items-center justify-between">
-          <h2 className="content-lg text-xl mb-2 font-semibold">{poll.title}</h2>
+        <div className="flex space-x-2">
+          {poll.requireVerification && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <BadgeCheck className="text-blue-500" size={38} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Verified users only</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <BadgeCheck className="text-blue-500" size={42} />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Verified users only</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
+          {poll.isActionable && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <OctagonAlert className="text-red-500" size={38} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Actionable Poll</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
 
-      }
+      </div>
 
 
       <p className="text-sm mb-3">{poll.description}</p>
