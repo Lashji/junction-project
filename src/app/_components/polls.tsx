@@ -9,12 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { ArrowUpDown, MessageSquare, ThumbsUp } from "lucide-react";
+import { ArrowUpDown, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Poll, Answer, Comment, Threads, Vote } from "~/types";
+import {
+  type Poll,
+  type Answer,
+  type Comment,
+  type Threads,
+  type Vote,
+} from "~/types";
 import { env } from "~/env";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useStore } from "~/store";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { useAuth } from "../_context/auth-context";
 import "~/styles/CustomUnderline.css"
 
@@ -157,6 +163,8 @@ export default function Polls() {
 
   const { isAuthenticated, userId } = useAuth();
 
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["polls"],
     queryFn: () => fetchUnAnsweredPolls(userId!),
@@ -199,10 +207,28 @@ export default function Polls() {
     }) => likeComment(pollId, commentId, userId!),
   });
 
+  const { data: selectedPollData } = useQuery({
+    queryKey: ["poll", selectedPoll?.id],
+    queryFn: () => (selectedPoll ? fetchPoll(selectedPoll.id) : null),
+    enabled: !!selectedPoll,
+  });
+
   const handleVote = async (pollId: string, answer: string) => {
     if (!userId) return;
 
-    answerPollMutation({ pollId, answer });
+    answerPollMutation(
+      {
+        pollId,
+        answer,
+      },
+      {
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: ["polls"] });
+          void queryClient.invalidateQueries({ queryKey: ["poll", pollId] });
+          void queryClient.invalidateQueries({ queryKey: ["userAnswers"] });
+        },
+      },
+    );
   };
 
   const handleAddComment = async (
@@ -263,9 +289,7 @@ export default function Polls() {
                 handlePush(poll.id);
                 setSelectedPoll(poll);
               }}
-              onVote={() => {
-                console.log("vote");
-              }}
+              onVote={handleVote}
             />
           ))
         )}
@@ -281,15 +305,24 @@ function PollItem({
 }: {
   poll: Poll;
   onSelect: () => void;
-  onVote: (pollId: string, optionIndex: number) => void;
+  onVote: (pollId: string, answer: string) => void;
 }) {
+  const { userId } = useAuth();
   const totalVotes = poll.answers.length;
-  const percentages = poll.options.map((option) => {
-    const count = poll.answers.filter(
-      (answer) => answer.answer === option,
-    ).length;
-    return ((count / totalVotes) * 100).toFixed(1);
-  });
+
+  // Calculate percentages for each option
+  const optionStats = poll.options.reduce(
+    (acc, option) => {
+      const votes = poll.answers.filter(
+        (answer) => answer.answer === option,
+      ).length;
+      const percentage = ((votes / totalVotes) * 100 || 0).toFixed(1);
+      return { ...acc, [option]: { votes, percentage } };
+    },
+    {} as Record<string, { votes: number; percentage: string }>,
+  );
+
+  const hasVoted = poll.answers.some((answer) => answer.userId === userId);
 
   return (
     <div
@@ -297,83 +330,53 @@ function PollItem({
       onClick={onSelect}
     >
       <h2 className="content-lg mb-2 font-semibold">{poll.title}</h2>
-      {/* {!poll.userVoted && (
-        <> */}
-      {/* <p className="content-sm content-gray-500 mb-2">
-            Vote to see the results.
-          </p>
 
-          <div className="w-100 relative mb-2 flex h-8 overflow-hidden rounded-full">
-            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              add
-            </p>
-            <div
-              className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-              style={{ width: `50%` }}
-            />
-            <p className="content-white absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              Vote to see the real results!
-            </p>
-            <div
-              className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-              style={{ width: `50%` }}
-            />
+      {hasVoted ? (
+        <>
+          <div className="relative mb-2 flex h-8 overflow-hidden rounded-full">
+            {poll.options.map((option, index) => (
+              <div
+                key={option}
+                className={`${index === 0 ? "bg-blue-500" : "bg-red-500"} transition-all duration-500 ease-out`}
+                style={{
+                  width: `${optionStats[option]?.percentage}%`,
+                  position: "relative",
+                }}
+              >
+                <span className="content-white absolute inset-0 flex items-center justify-center">
+                  {optionStats[option]?.percentage}%
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="content-sm mb-2 flex justify-between">
+            {poll.options.map((option, index) => (
+              <span
+                key={option}
+                className={`content-${index === 0 ? "blue" : "red"}-500`}
+              >
+                {option}: {optionStats[option]?.percentage}%
+              </span>
+            ))}
           </div>
         </>
+      ) : (
+        <div className="mb-2 flex justify-between">
+          {poll.options.map((option) => (
+            <Button
+              key={option}
+              onClick={(e) => {
+                e.stopPropagation();
+                onVote(poll.id, option);
+              }}
+              variant="outline"
+            >
+              Vote {option}
+            </Button>
+          ))}
+        </div>
       )}
-      {poll.userVoted ? (
-        <>
-          <>
-            <div className="relative mb-2 flex h-8 overflow-hidden rounded-full">
-              <div
-                className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-                style={{ width: `${percentages[0]}%`, position: "relative" }}
-              >
-                <span className="content-white absolute inset-0 flex items-center justify-center">
-                  {percentages[0]}%
-                </span>
-              </div>
-              <div
-                className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-                style={{ width: `${percentages[1]}%`, position: "relative" }}
-              >
-                <span className="content-white absolute inset-0 flex items-center justify-center">
-                  {percentages[1]}%
-                </span>
-              </div>
-            </div>
-            <div className="content-sm mb-2 flex justify-between">
-              <span className="content-blue-500">
-                {poll.options[0]}: {percentages[0]}%
-              </span>
-              <span className="content-red-500">
-                {poll.options[1]}: {percentages[1]}%
-              </span>
-            </div>
-          </> */}
-      {/* </>
-      ) : ( */}
-      <div className="mb-2 flex justify-between">
-        <Button
-          onClick={(e) => {
-            e.stopPropagation();
-            onVote(poll.id, 0);
-          }}
-          variant="outline"
-        >
-          Vote {poll.options[0]}
-        </Button>
-        <Button
-          onClick={(e) => {
-            e.stopPropagation();
-            onVote(poll.id, 1);
-          }}
-          variant="outline"
-        >
-          Vote {poll.options[1]}
-        </Button>
-      </div>
-      {/* )} */}
+
       <div className="content-sm content-gray-500 mt-2 flex items-center justify-between">
         <span>
           <ArrowUpDown className="mr-1 inline" size={16} />
@@ -390,7 +393,7 @@ function PollItem({
 function likeComment(
   pollId: string,
   commentId: string,
-  arg2: string,
+  userId: string,
 ): Promise<unknown> {
   throw new Error("Function not implemented.");
 }
