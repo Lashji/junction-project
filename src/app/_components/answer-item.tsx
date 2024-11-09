@@ -91,3 +91,10 @@ export default function AnswerItem({ answer }: { answer: Answer }) {
     </div>
   );
 }
+function likeComment(
+  pollId: string,
+  commentId: string,
+  userId: string,
+): Promise<unknown> {
+  throw new Error("Function not implemented.");
+}

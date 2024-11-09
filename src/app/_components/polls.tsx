@@ -201,16 +201,16 @@ export default function Polls() {
     }) => createComment(pollId, content, userId!, threadId),
   });
 
-  const { mutate: likeCommentMutation } = useMutation({
-    mutationKey: ["likeComment"],
-    mutationFn: ({
-      pollId,
-      commentId,
-    }: {
-      pollId: string;
-      commentId: string;
-    }) => likeComment(pollId, commentId, userId!),
-  });
+  // const { mutate: likeCommentMutation } = useMutation({
+  //   mutationKey: ["likeComment"],
+  //   mutationFn: ({
+  //     pollId,
+  //     commentId,
+  //   }: {
+  //     pollId: string;
+  //     commentId: string;
+  //   }) => handleLikeComment(pollId, commentId),
+  // });
 
   const { data: selectedPollData } = useQuery({
     queryKey: ["poll", selectedPoll?.id],
@@ -246,11 +246,11 @@ export default function Polls() {
     createCommentMutation({ pollId, content, threadId });
   };
 
-  const handleLikeComment = async (pollId: string, commentId: string) => {
-    if (!userId) return;
+  // const handleLikeComment = async (pollId: string, commentId: string) => {
+  //   if (!userId) return;
 
-    likeCommentMutation({ pollId, commentId });
-  };
+  //   likeCommentMutation({ pollId, commentId });
+  // };
 
   const router = useRouter();
 
@@ -400,11 +400,4 @@ function PollItem({
       </div>
     </div>
   );
-}
-function likeComment(
-  pollId: string,
-  commentId: string,
-  userId: string,
-): Promise<unknown> {
-  throw new Error("Function not implemented.");
 }
