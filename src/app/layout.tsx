@@ -34,9 +34,8 @@ export default async function RootLayout({
             }}
           >
             <FingerprintProvider tempIdToken={tempIdToken}>
-              <Navbar />
+              {children}
             </FingerprintProvider>
-            {children}
           </FpjsProvider>
         </TRPCReactProvider>
       </body>

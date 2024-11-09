@@ -116,7 +116,7 @@ export default function Polls() {
       polls.map((poll) => {
         if (poll.id === pollId && !poll.userVoted) {
           const newVotes = [...poll.votes];
-          newVotes[optionIndex]!++;
+          newVotes[optionIndex] ? newVotes[optionIndex]++ : 0;
           return {
             ...poll,
             votes: newVotes as [number, number],
@@ -147,7 +147,7 @@ export default function Polls() {
         if (poll.id === pollId) {
           const newComments = [...poll.comments];
           newComments[optionIndex] = [
-            ...newComments[optionIndex]!,
+            ...newComments[optionIndex] ?? [],
             {
               id: Date.now().toString(),
               text: comment,
@@ -171,11 +171,11 @@ export default function Polls() {
       polls.map((poll) => {
         if (poll.id === pollId) {
           const newComments = [...poll.comments];
-          newComments[optionIndex] = newComments[optionIndex]!.map((comment) =>
+          newComments[optionIndex] = newComments[optionIndex] ? newComments[optionIndex].map((comment) =>
             comment.id === commentId && !comment.userLiked
               ? { ...comment, likes: comment.likes + 1, userLiked: true }
               : comment,
-          );
+          ) : [];
           return { ...poll, comments: newComments as [Comment[], Comment[]] };
         }
         return poll;
@@ -198,12 +198,12 @@ export default function Polls() {
           value={sortBy}
           onValueChange={(value) => setSortBy(value as "top" | "new")}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-card">
             <SelectValue placeholder="Select sorting" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="top">Top Posts</SelectItem>
-            <SelectItem value="new">New Posts</SelectItem>
+            <SelectItem className="bg-card" value="top"> Top Posts</SelectItem>
+            <SelectItem value="new">Recent Posts</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -269,6 +269,7 @@ function PollItem({
               className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}
             />
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white">Vote to see the real results!</p>
             <div
               className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}
@@ -278,25 +279,34 @@ function PollItem({
       )}
       {poll.userVoted ? (
         <>
-          <div className="mb-2 flex h-8 overflow-hidden rounded-full">
-            <div
-              className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-              style={{ width: `${percentages[0]}%` }}
-            />
-            <div
-              className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-              style={{ width: `${percentages[1]}%` }}
-            />
-          </div>
-
-          <div className="mb-2 flex justify-between text-sm">
-            <span className="text-blue-500">
-              {poll.options[0]}: {percentages[0]}%
-            </span>
-            <span className="text-red-500">
-              {poll.options[1]}: {percentages[1]}%
-            </span>
-          </div>
+          <>
+            <div className="mb-2 relative flex h-8 overflow-hidden rounded-full">
+              <div
+                className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+                style={{ width: `${percentages[0]}%`, position: 'relative' }}
+              >
+                <span className="absolute inset-0 flex items-center justify-center text-white">
+                  {percentages[0]}%
+                </span>
+              </div>
+              <div
+                className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+                style={{ width: `${percentages[1]}%`, position: 'relative' }}
+              >
+                <span className="absolute inset-0 flex items-center justify-center text-white">
+                  {percentages[1]}%
+                </span>
+              </div>
+            </div>
+            <div className="mb-2 flex justify-between text-sm">
+              <span className="text-blue-500">
+                {poll.options[0]}: {percentages[0]}%
+              </span>
+              <span className="text-red-500">
+                {poll.options[1]}: {percentages[1]}%
+              </span>
+            </div>
+          </>
         </>
       ) : (
         <div className="mb-2 flex justify-between">

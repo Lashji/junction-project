@@ -11,9 +11,10 @@ interface StoreState {
   setInitialized: (initialized: boolean) => void;
   wallet: Wallet | null;
   setWallet: (wallet: Wallet) => void;
+  getIdentityDID: () => string | undefined;
 }
 
-export const useStore = create<StoreState>((set) => ({
+export const useStore = create<StoreState>((set, get) => ({
   nationality: "",
   setNationality: (nationality) => set({ nationality }),
   initializeVerifiedAccount: (tempIdToken: string) => {
@@ -34,4 +35,13 @@ export const useStore = create<StoreState>((set) => ({
   setInitialized: (initialized) => set({ initialized }),
   wallet: null,
   setWallet: (wallet) => set({ wallet }),
+  getIdentityDID: () => {
+    const wallet = get().wallet;
+
+    if (!wallet) {
+      return;
+    }
+
+    return wallet.getActiveIdentityDID();
+  },
 }));
