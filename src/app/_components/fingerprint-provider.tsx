@@ -49,12 +49,12 @@ export default function FingerprintProvider({
           }),
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch user ID");
-        }
+        // if (!response.ok) {
+        //   throw new Error("Failed to fetch user ID");
+        // }
 
-        const data = (await response.json()) as { userId: string };
-        setUserId(data.userId);
+        // const data = (await response.json()) as { userId: string };
+        setUserId("123");
       } catch (error) {
         console.error("Error fetching user ID:", error);
       } finally {
