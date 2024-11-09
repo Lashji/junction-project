@@ -5,7 +5,7 @@ import { DID } from "@iden3/js-iden3-core";
 
 import { WalletService } from "./wallet-services";
 
-export class AuthboundIdentityWallet {
+export class Wallet {
   private walletService: WalletService;
 
   constructor(subClaim: string) {
