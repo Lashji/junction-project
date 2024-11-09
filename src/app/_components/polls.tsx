@@ -211,7 +211,7 @@ export default function Polls() {
           value={sortBy}
           onValueChange={(value) => setSortBy(value as "top" | "new")}
         >
-          <SelectTrigger className="w-[180px] bg-card-foreground w-30">
+          <SelectTrigger className="w-30 w-[180px] bg-card-foreground">
             <SelectValue placeholder="Select sorting" />
           </SelectTrigger>
           <SelectContent>
@@ -276,7 +276,6 @@ function PollItem({
       {!poll.userVoted && (
         <>
           <div className="w-100 relative mb-2 flex h-8 overflow-hidden border-2 border-amber-600">
-
             <div
               className={`bg-[#FFB89A] transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}

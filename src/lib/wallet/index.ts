@@ -3,15 +3,31 @@ import "./config";
 import type { W3CCredential } from "@0xpolygonid/js-sdk";
 import { DID } from "@iden3/js-iden3-core";
 
-import { WalletService } from "./wallet-services";
+import { WalletEvents, WalletService } from "./wallet-services";
 import { type TokenData } from "~/types";
 
 export class Wallet {
   private walletService: WalletService;
+  private ready = false;
 
-  constructor(tokenData: TokenData) {
+  constructor(tokenData?: TokenData) {
     this.walletService = new WalletService(tokenData);
+    this.walletService.once(WalletEvents.INITIALIZED, () => {
+      console.log("wallet initialized");
+      this.ready = true;
+    });
   }
+
+  isReady = () => {
+    return new Promise((resolve) => {
+      if (this.ready) {
+        resolve(true);
+        return;
+      }
+
+      this.walletService.once(WalletEvents.INITIALIZED, resolve);
+    });
+  };
 
   async syncCredentials(creds: W3CCredential[]) {
     await this.walletService.getCredWallet().saveAll(creds);

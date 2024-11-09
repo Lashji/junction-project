@@ -22,8 +22,6 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const cookieStore = await cookies();
-  const tempIdToken = cookieStore.get("temp_id_token")?.value ?? undefined;
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
@@ -34,7 +32,7 @@ export default async function RootLayout({
               region: "eu",
             }}
           >
-            <FingerprintProvider tempIdToken={tempIdToken}>
+            <FingerprintProvider>
               <AuthProvider>{children}</AuthProvider>
             </FingerprintProvider>
           </FpjsProvider>

@@ -3,17 +3,22 @@
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "../_context/auth-context";
+import { useEffect } from "react";
 
 export default function NavbarClient() {
   const { isAuthenticated, logout } = useAuth();
   console.log("isAuthenticated", isAuthenticated);
+
+  useEffect(() => {
+    console.log("isAuthenticated", isAuthenticated);
+  }, [isAuthenticated]);
+
   return (
     <>
       <div className="flex items-center gap-6">
         <Link href="/" className="text-2xl font-bold tracking-[3px]">
           Quorum
         </Link>
-
       </div>
 
       <div className="flex items-center gap-4">
