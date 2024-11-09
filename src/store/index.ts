@@ -10,12 +10,14 @@ interface AuthState {
   error: Error | null;
   isAuthenticated: boolean;
   nationality: string;
+  initialized: boolean;
 }
 
 interface AuthActions {
   initialize: (tempIdToken: string) => Promise<void>;
   logout: () => void;
   setNationality: (nationality: string) => void;
+  setInitialized: (initialized: boolean) => void;
 }
 
 interface StoreState extends AuthState {
@@ -32,7 +34,7 @@ export const useStore = create<StoreState>((set, get) => ({
   error: null,
   isAuthenticated: false,
   nationality: "",
-
+  initialized: false,
   // Actions
   actions: {
     initialize: async (tempIdToken: string) => {
@@ -41,6 +43,7 @@ export const useStore = create<StoreState>((set, get) => ({
         const tokenData = JSON.parse(tempIdToken) as TokenData;
         const wallet = new Wallet(tokenData);
         const did = wallet.getActiveIdentityDID();
+        console.log("Initializing wallet", did);
 
         set({
           wallet,
@@ -58,6 +61,8 @@ export const useStore = create<StoreState>((set, get) => ({
         });
       }
     },
+
+    setInitialized: (initialized: boolean) => set({ initialized }),
 
     logout: () => {
       localStorage.clear();

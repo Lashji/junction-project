@@ -6,7 +6,7 @@ import { useAuth } from "../_context/auth-context";
 
 export default function NavbarClient() {
   const { isAuthenticated, logout } = useAuth();
-
+  console.log("isAuthenticated", isAuthenticated);
   return (
     <>
       <div className="flex items-center gap-6">

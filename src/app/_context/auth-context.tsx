@@ -12,16 +12,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { isLoading, actions } = useStore();
 
   useEffect(() => {
-    const accountManager = new ActiveIdentityManager();
-    const activeIdentity = accountManager.getActiveIdentity();
-    console.log("Authbound provider", accountManager, activeIdentity);
+    const initializeAuth = async () => {
+      const accountManager = new ActiveIdentityManager();
+      const activeIdentity = accountManager.getActiveIdentity();
+      console.log("Authbound provider", accountManager, activeIdentity);
 
-    if (activeIdentity?.did) {
-      // Re-initialize from stored identity
-      // You may want to add additional logic here to validate the stored identity
-      void actions.initialize(activeIdentity.did);
-    }
-  }, [actions]);
+      if (activeIdentity?.did) {
+        try {
+          await actions.initialize(activeIdentity.did);
+        } catch (error) {
+          console.error("Failed to initialize auth:", error);
+        }
+      } else {
+        // Set initialized state even when there's no active identity
+        actions.setInitialized(true);
+      }
+    };
+
+    void initializeAuth();
+  }, []); // Empty dependency array since we only want this to run once
 
   return (
     <AuthContext.Provider value={{ initialized: !isLoading }}>
