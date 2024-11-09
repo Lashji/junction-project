@@ -10,7 +10,7 @@ export default function NavbarClient() {
   return (
     <>
       <div className="flex items-center gap-6">
-        <Link href="/" className="text-xl font-light">
+        <Link href="/" className="text-2xl font-bold tracking-[3px]">
           Quorum
         </Link>
 
