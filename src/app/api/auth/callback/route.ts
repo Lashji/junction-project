@@ -90,7 +90,9 @@ export async function GET(request: NextRequest) {
     (await cookies()).delete("code_verifier");
     (await cookies()).delete("auth_state");
 
-    return NextResponse.redirect(new URL("/account", env.NEXT_PUBLIC_BASE_URL));
+    return NextResponse.redirect(
+      new URL("/account/setup", env.NEXT_PUBLIC_BASE_URL),
+    );
   } catch (error) {
     console.error("Authentication error:", error);
     return NextResponse.redirect(

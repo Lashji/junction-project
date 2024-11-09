@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect } from "react";
 import { useStore } from "~/store";
 import { ActiveIdentityManager } from "~/lib/wallet/local-storage-service";
 import { useFingerprint } from "./fingerprint-context";
+import { TokenData } from "~/types";
 
 const AuthContext = createContext<{ initialized: boolean }>({
   initialized: false,

@@ -14,6 +14,7 @@ interface AuthState {
   authType: "did" | "fingerprint" | null;
   fingerprintToken?: string;
   visitorId?: string;
+  tokenData?: TokenData;
 }
 
 interface AuthActions {
@@ -44,26 +45,23 @@ export const useStore = create<StoreState>((set, get) => ({
   visitorId: undefined,
   // Actions
   actions: {
-    initialize: async (token?: TokenData) => {
+    initialize: async (tokenData?: TokenData) => {
       set({ isLoading: true });
       try {
-        const wallet = new Wallet(token);
+        const wallet = new Wallet(tokenData);
         await wallet.isReady();
         console.log("wallet is ready");
 
         const did = wallet.getActiveIdentityDID();
         console.log("Initializing wallet", did);
 
-        const payload = {
+        return set({
           wallet,
           did,
           isAuthenticated: true,
           isLoading: false,
-        };
-
-        console.log("settings payload");
-
-        return set({ ...get(), ...payload });
+          tokenData,
+        });
       } catch (err) {
         set({
           error:

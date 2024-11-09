@@ -11,15 +11,11 @@ import { env } from "~/env";
 
 interface FingerprintProviderProps {
   children: React.ReactNode;
-  tempIdToken?: string;
 }
 
 export default function FingerprintProvider({
   children,
-  tempIdToken,
 }: FingerprintProviderProps) {
-  const searchParams = useSearchParams();
-  const initialize = searchParams.get("initialize");
   const [isUserIdLoading, setIsUserIdLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -65,11 +61,7 @@ export default function FingerprintProvider({
     if (visitorData?.visitorId) {
       void fetchUserId();
     }
-  }, [visitorData?.visitorId, tempIdToken, visitorData?.requestId]);
-
-  if (initialize) {
-    return <div>Initializing...</div>;
-  }
+  }, [visitorData?.visitorId, visitorData?.requestId]);
 
   if (isVisitorLoading || isUserIdLoading) {
     return <div>Loading...</div>;
@@ -78,10 +70,6 @@ export default function FingerprintProvider({
   if (visitorError) {
     return <div>Error: {visitorError.message}</div>;
   }
-
-  // if (!visitorData?.visitorId || !userId) {
-  //   return <div>Authentication failed. You need to disable AdBlock.</div>;
-  // }
 
   const contextValue: FingerprintContextType = {
     authToken: userId ?? undefined,
