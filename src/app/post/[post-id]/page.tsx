@@ -1,3 +1,11 @@
+import { useRouter } from "next/navigation";
+
 export default function Post() {
-  return <div>Post</div>;
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push("/login");
+  };
+
+  return <div onClick={handleClick}>Post</div>;
 }
