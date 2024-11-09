@@ -1,23 +1,5 @@
 import { z } from "zod";
 
-export type Comment = {
-  id: string;
-  text: string;
-  likes: number;
-  userLiked: boolean;
-};
-
-export type Poll = {
-  id: number;
-  question: string;
-  options: [string, string];
-  votes: [number, number];
-  comments: [Comment[], Comment[]];
-  createdAt: Date;
-  userVoted: boolean;
-  justVoted: boolean;
-};
-
 export type TokenData = {
   iss: string;
   nbf: number;
@@ -47,3 +29,33 @@ export const credentialDataSchema = z.object({
 });
 
 export type CredentialData = z.infer<typeof credentialDataSchema>;
+
+export type Answer = {
+  id: string;
+  userId: string;
+  pollId: string;
+  answer: string;
+  createdAt: string;
+};
+
+export type Poll = {
+  id: string;
+  title: string;
+  description: string;
+  options: string[];
+  answers: Answer[];
+  comments: Comment[];
+};
+
+export type Threads = Record<string, Comment[]>;
+
+export type Comment = {
+  id: string;
+  content: string;
+  pollAnswer: string;
+  userId: string;
+  pollId: string;
+  threadId: string;
+  threadPosition: number;
+  createdAt: string;
+};

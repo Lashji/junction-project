@@ -37,7 +37,7 @@ export default function NavbarClient() {
           </>
         ) : (
           <Link href="/login">
-            <Button>Sign In</Button>
+            <Button className="bg-foreground">Sign In</Button>
           </Link>
         )}
       </div>

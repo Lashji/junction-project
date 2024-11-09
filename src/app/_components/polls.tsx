@@ -1,13 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -16,83 +10,77 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { ArrowUpDown, MessageSquare, ThumbsUp } from "lucide-react";
-import { Input } from "~/components/ui/input";
-import { ScrollArea } from "~/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
-import Visitor from "./visitor";
-import { Comment, Poll } from "~/types";
-import "~/styles/CustomUnderline.css";
-import { ConsoleLogWriter } from "drizzle-orm";
+import { Poll, Answer, Comment } from "~/types";
 
 const initialPolls: Poll[] = [
   {
-    id: 1,
-    question: "Do you prefer coffee or tea?",
+    id: "1",
+    title: "Do you prefer coffee or tea?",
+    description: "string",
     options: ["Coffee", "Tea"],
-    votes: [150, 100],
+    answers: [
+      {
+        id: "answer_1",
+        userId: "user_1",
+        pollId: "1",
+        answer: "Coffee",
+        createdAt: "2023-05-01T13:09:59.085539",
+      },
+    ],
     comments: [
-      [
-        {
-          id: "1",
-          text: "I love the aroma of coffee!",
-          likes: 5,
-          userLiked: false,
-        },
-        {
-          id: "2",
-          text: "Can't start my day without it",
-          likes: 3,
-          userLiked: false,
-        },
-      ],
-      [
-        { id: "3", text: "Tea is so soothing", likes: 4, userLiked: false },
-        {
-          id: "4",
-          text: "I prefer the variety of flavors in tea",
-          likes: 2,
-          userLiked: false,
-        },
-      ],
+      {
+        id: "1",
+        content: "I love the aroma of coffee!",
+      },
+      {
+        id: "2",
+        content: "Can't start my day without it",
+      },
     ],
     createdAt: new Date("2023-05-01"),
     userVoted: false,
     justVoted: false,
   },
   {
-    id: 2,
-    question: "Do you like Cats or dogs?",
+    id: "2",
+    title: "Cats or dogs?",
+    description: "string",
     options: ["Cats", "Dogs"],
-    votes: [120, 180],
+    answers: [
+      {
+        id: "answer_2",
+        userId: "user_2",
+        pollId: "2",
+        answer: "Dogs",
+        createdAt: "2023-05-15T13:09:59.085539",
+      },
+    ],
     comments: [
-      [
-        {
-          id: "5",
-          text: "Cats are so independent",
-          likes: 6,
-          userLiked: false,
-        },
-        {
-          id: "6",
-          text: "I love how graceful they are",
-          likes: 3,
-          userLiked: false,
-        },
-      ],
-      [
-        {
-          id: "7",
-          text: "Dogs are man's best friend!",
-          likes: 7,
-          userLiked: false,
-        },
-        {
-          id: "8",
-          text: "I love going on walks with my dog",
-          likes: 4,
-          userLiked: false,
-        },
-      ],
+      {
+        id: "5",
+        content: "Cats are so independent",
+        likes: 6,
+        userLiked: false,
+      },
+      {
+        id: "6",
+        content: "I love how graceful they are",
+        likes: 3,
+        userLiked: false,
+      },
+      {
+        id: "7",
+        content: "Dogs are man's best friend!",
+        likes: 7,
+        userLiked: false,
+      },
+      {
+        id: "8",
+        content: "I love going on walks with my dog",
+        likes: 4,
+        userLiked: false,
+      },
     ],
     createdAt: new Date("2023-05-15"),
     userVoted: false,
@@ -105,79 +93,61 @@ export default function Polls() {
   const [sortBy, setSortBy] = useState<"top" | "new">("top");
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
 
-  console.log(polls, "polls");
+  const sortedPolls = [...polls].sort((a, b) => {
+    if (sortBy === "top") {
+      return b.answers.length - a.answers.length;
+    } else {
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    }
+  });
 
-  const [sortedPolls, setSortedPols] = useState<Poll[]>([]);
-
-  // const sortedPolls = [...polls].sort((a, b) => {
-  //   if (sortBy === "top") {
-  //     return b.votes[0] + b.votes[1] - (a.votes[0] + a.votes[1]);
-  //   } else {
-  //     return b.createdAt.getTime() - a.createdAt.getTime();
-  //   }
-  // });
-
-  useEffect(() => {
-    setSortedPols(
-      [...polls].sort((a, b) => {
-        if (sortBy === "top") {
-          return b.votes[0] + b.votes[1] - (a.votes[0] + a.votes[1]);
-        } else {
-          return b.createdAt.getTime() - a.createdAt.getTime();
+  const handleVote = (pollId: string, optionIndex: number) => {
+    setPolls(
+      polls.map((poll) => {
+        if (poll.id === pollId && !poll.userVoted) {
+          const newAnswers = [...poll.answers];
+          newAnswers.push({
+            id: `answer_${Date.now()}`,
+            userId: `user_${Date.now()}`,
+            pollId: poll.id,
+            answer: poll.options[optionIndex],
+            createdAt: new Date().toISOString(),
+          });
+          return {
+            ...poll,
+            answers: newAnswers,
+            userVoted: true,
+            justVoted: true,
+          };
         }
+        return poll;
       }),
     );
-  }, [polls, sortBy]);
 
-  const handleVote = (pollId: number, optionIndex: number) => {
-    const oldPoll = sortedPolls.find((i) => i.id === pollId);
-
-    if (oldPoll?.votes[optionIndex] === undefined) {
-      return;
-    }
-
-    const newVote = oldPoll.votes[optionIndex]++;
-    const newVotes = [...oldPoll.votes] as [number, number];
-
-    newVotes[optionIndex] = newVote;
-
-    const updatedPoll = {
-      ...oldPoll,
-      votes: newVotes,
-      userVoted: true,
-      justVoted: true,
-    } satisfies Poll;
-
-    setPolls(() => [...polls.filter((i) => i.id !== pollId), updatedPoll]);
-
-    // setTimeout(() => {
-    //   setPolls((polls) =>
-    //     polls.map((poll) =>
-    //       poll.id === pollId ? { ...poll, justVoted: false } : poll,
-    //     ),
-    //   );
-    // }, 500);
+    setTimeout(() => {
+      setPolls((polls) =>
+        polls.map((poll) =>
+          poll.id === pollId ? { ...poll, justVoted: false } : poll,
+        ),
+      );
+    }, 500);
   };
 
   const handleAddComment = (
-    pollId: number,
-    optionIndex: number,
+    pollId: string,
     comment: string,
   ) => {
     setPolls(
       polls.map((poll) => {
         if (poll.id === pollId) {
           const newComments = [...poll.comments];
-          newComments[optionIndex] = [
-            ...(newComments[optionIndex] ?? []),
-            {
-              id: Date.now().toString(),
-              text: comment,
-              likes: 0,
-              userLiked: false,
-            },
-          ];
-          return { ...poll, comments: newComments as [Comment[], Comment[]] };
+          newComments.push({
+            id: Date.now().toString(),
+            content: comment,
+            likes: 0,
+            userLiked: false,
+          });
+          return { ...poll, comments: newComments };
         }
         return poll;
       }),
@@ -185,22 +155,18 @@ export default function Polls() {
   };
 
   const handleLikeComment = (
-    pollId: number,
-    optionIndex: number,
+    pollId: string,
     commentId: string,
   ) => {
     setPolls(
       polls.map((poll) => {
         if (poll.id === pollId) {
-          const newComments = [...poll.comments];
-          newComments[optionIndex] = newComments[optionIndex]
-            ? newComments[optionIndex].map((comment) =>
-                comment.id === commentId && !comment.userLiked
-                  ? { ...comment, likes: comment.likes + 1, userLiked: true }
-                  : comment,
-              )
-            : [];
-          return { ...poll, comments: newComments as [Comment[], Comment[]] };
+          const newComments = poll.comments.map((comment) =>
+            comment.id === commentId && !comment.userLiked
+              ? { ...comment, likes: comment.likes + 1, userLiked: true }
+              : comment,
+          );
+          return { ...poll, comments: newComments };
         }
         return poll;
       }),
@@ -209,29 +175,24 @@ export default function Polls() {
 
   const router = useRouter();
 
-  const handlePush = (pollsID: number) => {
-    router.push("/post/" + pollsID);
+  const handlePush = (pollId: string) => {
+    router.push("/post/" + pollId);
   };
 
   return (
     <div>
-      <h1 className="h1class mb-4 text-center text-4xl font-bold">
-        Ongoing Polls
-      </h1>
+      <h1 className="mb-4 content-2xl font-bold">Poll App</h1>
       <div className="mb-4 flex items-center">
-        <span className="mr-2 text-sm font-medium">Sort by:</span>
+        <span className="mr-2 content-sm font-medium">Sort by:</span>
         <Select
           value={sortBy}
           onValueChange={(value) => setSortBy(value as "top" | "new")}
         >
-          <SelectTrigger className="w-30 w-[180px] bg-card-foreground">
+          <SelectTrigger className="w-[180px] bg-card">
             <SelectValue placeholder="Select sorting" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem className="bg-card" value="top">
-              {" "}
-              Top Posts
-            </SelectItem>
+            <SelectItem className="bg-card" value="top"> Top Posts</SelectItem>
             <SelectItem value="new">Recent Posts</SelectItem>
           </SelectContent>
         </Select>
@@ -250,18 +211,6 @@ export default function Polls() {
           />
         ))}
       </div>
-
-      {/** 
-       
-      <PollDialog 
-        poll={selectedPoll} 
-        onClose={() => setSelectedPoll(null)} 
-        onVote={handleVote}
-        onAddComment={handleAddComment}
-        onLikeComment={handleLikeComment}
-      />
-
-      **/}
     </div>
   );
 }
@@ -273,31 +222,35 @@ function PollItem({
 }: {
   poll: Poll;
   onSelect: () => void;
-  onVote: (pollId: number, optionIndex: number) => void;
+  onVote: (pollId: string, optionIndex: number) => void;
 }) {
-  const totalVotes = poll.votes[0] + poll.votes[1];
-  const percentages = poll.votes.map((votes) =>
-    ((votes / totalVotes) * 100).toFixed(1),
-  );
+  const totalVotes = poll.answers.length;
+  const percentages = poll.options.map((option) => {
+    const count = poll.answers.filter((answer) => answer.answer === option).length;
+    return ((count / totalVotes) * 100).toFixed(1);
+  });
 
   return (
     <div
-      className="cursor-pointer rounded-lg bg-card-foreground p-4 shadow transition-all duration-300 hover:shadow-lg"
+      className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg"
       onClick={onSelect}
     >
-      <h2 className="mb-2 text-lg font-semibold">{poll.question}</h2>
+      <h2 className="mb-2 content-lg font-semibold">{poll.title}</h2>
       {!poll.userVoted && (
         <>
-          <div className="w-100 relative mb-2 flex h-8 overflow-hidden border-2 border-amber-600">
-            <div
-              className={`bg-[#FFB89A] transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-              style={{ width: `50%` }}
-            />
-            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary">
-              Vote to see the real results!
+          <p className="mb-2 content-sm content-gray-500">Vote to see the results.</p>
+
+          <div className="w-100 relative mb-2 flex h-8 overflow-hidden rounded-full">
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              add
             </p>
             <div
-              className={`border-l-2 border-amber-500 bg-[#FFA97A] transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+              className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+              style={{ width: `50%` }}
+            />
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 content-white">Vote to see the real results!</p>
+            <div
+              className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}
             />
           </div>
@@ -306,29 +259,29 @@ function PollItem({
       {poll.userVoted ? (
         <>
           <>
-            <div className="relative mb-2 flex h-8 overflow-hidden">
+            <div className="mb-2 relative flex h-8 overflow-hidden rounded-full ">
               <div
                 className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-                style={{ width: `${percentages[0]}%`, position: "relative" }}
+                style={{ width: `${percentages[0]}%`, position: 'relative' }}
               >
-                <span className="absolute inset-0 flex items-center justify-center text-white">
+                <span className="absolute inset-0 flex items-center justify-center content-white">
                   {percentages[0]}%
                 </span>
               </div>
               <div
                 className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
-                style={{ width: `${percentages[1]}%`, position: "relative" }}
+                style={{ width: `${percentages[1]}%`, position: 'relative' }}
               >
-                <span className="absolute inset-0 flex items-center justify-center text-white">
+                <span className="absolute inset-0 flex items-center justify-center content-white">
                   {percentages[1]}%
                 </span>
               </div>
             </div>
-            <div className="mb-2 flex justify-between text-sm">
-              <span className="text-blue-500">
+            <div className="mb-2 flex justify-between content-sm">
+              <span className="content-blue-500">
                 {poll.options[0]}: {percentages[0]}%
               </span>
-              <span className="text-red-500">
+              <span className="content-red-500">
                 {poll.options[1]}: {percentages[1]}%
               </span>
             </div>
@@ -356,125 +309,16 @@ function PollItem({
           </Button>
         </div>
       )}
-      <div className="mt-2 flex items-center justify-between text-sm text-gray-500 text-primary">
+      <div className="mt-2 flex items-center justify-between content-sm content-gray-500">
         <span>
           <ArrowUpDown className="mr-1 inline" size={16} />
           {totalVotes} votes
         </span>
         <span>
           <MessageSquare className="mr-1 inline" size={16} />
-          {poll.comments[0].length + poll.comments[1].length} comments
+          {poll.comments.length} comments
         </span>
       </div>
     </div>
   );
 }
-
-/** 
-function PollDialog({ poll, onClose, onVote, onAddComment, onLikeComment }: { 
-  poll: Poll | null, 
-  onClose: () => void, 
-  onVote: (pollId: number, optionIndex: number) => void,
-  onAddComment: (pollId: number, optionIndex: number, comment: string) => void,
-  onLikeComment: (pollId: number, optionIndex: number, commentId: string) => void
-}) {
-  const [newComments, setNewComments] = useState(['', ''])
-
-  if (!poll) return null
-
-  const totalVotes = poll.votes[0] + poll.votes[1]
-  const percentages = poll.votes.map(votes => ((votes / totalVotes) * 100).toFixed(1))
-
-  const handleAddComment = (optionIndex: number) => {
-    if (newComments[optionIndex]!.trim()) {
-      onAddComment(poll.id, optionIndex, newComments[optionIndex]!.trim())
-      setNewComments(prev => {
-        const updated = [...prev]
-        updated[optionIndex] = ''
-        return updated
-      })
-    }
-  }
-
-  return (
-    <Dialog open={!!poll} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">{poll.question}</DialogTitle>
-        </DialogHeader>
-        <div className="mt-4 flex-grow overflow-hidden">
-          {!poll.userVoted && (
-            <p className="text-sm text-gray-500 mb-2">Vote to see the results.</p>
-          )}
-          {poll.userVoted ? (
-            <>
-              <div className="flex h-8 rounded-full overflow-hidden mb-2">
-                <div 
-                  className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? 'animate-pulse' : ''}`}
-                  style={{ width: `${percentages[0]}%` }}
-                />
-                <div 
-                  className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? 'animate-pulse' : ''}`}
-                  style={{ width: `${percentages[1]}%` }}
-                />
-              </div>
-              <div className="flex justify-between mb-4 text-lg font-semibold">
-                <span className="text-blue-500">{poll.options[0]}: {percentages[0]}%</span>
-                <span className="text-red-500">{poll.options[1]}: {percentages[1]}%</span>
-              </div>
-            </>
-          ) : (
-            <div className="flex justify-center mb-4">
-              <Button onClick={() => onVote(poll.id, 0)} variant="outline" className="mr-4">
-                Vote {poll.options[0]}
-              </Button>
-              <Button onClick={() => onVote(poll.id, 1)} variant="outline">
-                Vote {poll.options[1]}
-              </Button>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-4 h-[calc(100%-6rem)] overflow-hidden">
-            {poll.options.map((option, index) => (
-              <div key={option} className="flex flex-col h-full">
-                <h3 className="font-semibold mb-2 text-lg">{option} Comments:</h3>
-                <ScrollArea className="flex-grow mb-4 pr-4">
-                  {poll.comments[index]!
-                    .sort((a, b) => b.likes - a.likes)
-                    .map((comment) => (
-                      <div key={comment.id} className="bg-gray-100 p-3 rounded-lg mb-2 shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <p className="text-sm mb-2">{comment.text}</p>
-                        <div className="flex justify-end">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => onLikeComment(poll.id, index, comment.id)}
-                            disabled={comment.userLiked}
-                          >
-                            <ThumbsUp className={`w-4 h-4 mr-1 ${comment.userLiked ? 'text-blue-500' : ''}`} />
-                            {comment.likes}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                </ScrollArea>
-                <div className="flex gap-2">
-                  <Input
-                    value={newComments[index]}
-                    onChange={(e) => setNewComments(prev => {
-                      const updated = [...prev]
-                      updated[index] = e.target.value
-                      return updated
-                    })}
-                    placeholder={`Comment on ${option}...`}
-                  />
-                  <Button onClick={() => handleAddComment(index)}>Post</Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-**/
