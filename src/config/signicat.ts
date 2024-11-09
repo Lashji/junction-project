@@ -47,5 +47,5 @@ export const signicatConfig: SignicatConfig = {
   encryptionPrivateKey: parsePrivateKey(env.SIGNICAT_PRIVATE_ENCRYPTION_KEY),
   privateKeyJWK: parsePrivateKey(env.SIGNICAT_PRIVATE_SIGNING_KEY),
   redirectUri: env.SIGNICAT_REDIRECT_URI,
-  issuer: "https://authbound-oy.sandbox.signicat.com/auth/open",
+  issuer: env.SIGNICAT_ISSUER,
 };
