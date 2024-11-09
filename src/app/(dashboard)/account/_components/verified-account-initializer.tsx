@@ -7,13 +7,11 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 interface VerifiedAccountInitializerProps {
   isLoading: boolean;
   error: Error | null;
-  initialized: boolean;
 }
 
 export default function VerifiedAccountInitializer({
   isLoading,
   error,
-  initialized,
 }: VerifiedAccountInitializerProps) {
   if (error) {
     return (
@@ -33,11 +31,6 @@ export default function VerifiedAccountInitializer({
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>Verifying your account...</span>
-          </div>
-        ) : !initialized ? (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <AlertCircle className="h-4 w-4" />
-            <span>No verification token found</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-green-600">

@@ -1,6 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { issuerRouter } from "./routers/issuer";
-
+import { verifierRouter } from "./routers/verifier";
 /**
  * This is the primary router for your server.
  *
@@ -8,6 +8,7 @@ import { issuerRouter } from "./routers/issuer";
  */
 export const appRouter = createTRPCRouter({
   issuer: issuerRouter,
+  verifier: verifierRouter,
 });
 
 // export type definition of API
