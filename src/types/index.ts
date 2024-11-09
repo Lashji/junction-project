@@ -59,3 +59,9 @@ export type Comment = {
   threadPosition: number;
   createdAt: string;
 };
+
+export type Vote = {
+  upvotes: number;
+  downvotes: number;
+  score: number;
+};

@@ -15,6 +15,7 @@ interface AuthState {
   fingerprintToken?: string;
   visitorId?: string;
   tokenData?: TokenData;
+  userId?: string;
 }
 
 interface AuthActions {
@@ -23,6 +24,7 @@ interface AuthActions {
   logout: () => void;
   setNationality: (nationality: string) => void;
   setInitialized: (initialized: boolean) => void;
+  setUserId: (userId?: string) => void;
 }
 
 interface StoreState extends AuthState {
@@ -43,6 +45,7 @@ export const useStore = create<StoreState>((set, get) => ({
   authType: null,
   fingerprintToken: undefined,
   visitorId: undefined,
+  userId: undefined,
   // Actions
   actions: {
     initialize: async (tokenData?: TokenData) => {
@@ -73,7 +76,8 @@ export const useStore = create<StoreState>((set, get) => ({
         throw new Error(`Failed to initialize wallet: ${err as string}`);
       }
     },
-
+    setUserId: (userId?: string) =>
+      userId ? set({ userId }) : set({ userId: undefined }),
     setInitialized: (initialized: boolean) => set({ initialized }),
 
     logout: () => {

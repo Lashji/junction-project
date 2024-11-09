@@ -9,8 +9,6 @@ import { TRPCReactProvider } from "~/trpc/react";
 import { FpjsProvider } from "@fingerprintjs/fingerprintjs-pro-react";
 import { env } from "~/env";
 
-import FingerprintProvider from "./_components/fingerprint-provider";
-import Navbar from "./_components/navbar";
 import { AuthProvider } from "./_context/auth-context";
 
 export const metadata: Metadata = {
@@ -32,9 +30,7 @@ export default async function RootLayout({
               region: "eu",
             }}
           >
-            <FingerprintProvider>
-              <AuthProvider>{children}</AuthProvider>
-            </FingerprintProvider>
+            <AuthProvider>{children}</AuthProvider>
           </FpjsProvider>
         </TRPCReactProvider>
       </body>
