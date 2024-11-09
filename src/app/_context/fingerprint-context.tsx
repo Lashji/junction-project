@@ -2,9 +2,9 @@
 
 import { createContext, useContext } from "react";
 
-interface FingerprintContextType {
-  authToken: string;
-  visitorId: string;
+export interface FingerprintContextType {
+  authToken?: string;
+  visitorId?: string;
 }
 
 const FingerprintContext = createContext<FingerprintContextType | undefined>(

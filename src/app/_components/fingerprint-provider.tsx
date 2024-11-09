@@ -3,18 +3,19 @@
 import { useVisitorData } from "@fingerprintjs/fingerprintjs-pro-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FingerprintContext } from "../_context/fingerprint-context";
+import {
+  FingerprintContext,
+  FingerprintContextType,
+} from "../_context/fingerprint-context";
 
 interface FingerprintProviderProps {
   children: React.ReactNode;
   tempIdToken?: string;
-  tempRawToken?: string;
 }
 
 export default function FingerprintProvider({
   children,
   tempIdToken,
-  tempRawToken,
 }: FingerprintProviderProps) {
   const searchParams = useSearchParams();
   const initialize = searchParams.get("initialize");
@@ -45,7 +46,6 @@ export default function FingerprintProvider({
           body: JSON.stringify({
             visitorId: visitorData.visitorId,
             tempIdToken,
-            tempRawToken,
           }),
         });
 
@@ -65,7 +65,7 @@ export default function FingerprintProvider({
     if (visitorData?.visitorId) {
       void fetchUserId();
     }
-  }, [visitorData?.visitorId, tempIdToken, tempRawToken]);
+  }, [visitorData?.visitorId, tempIdToken]);
 
   if (initialize) {
     return <div>Initializing...</div>;
@@ -79,13 +79,13 @@ export default function FingerprintProvider({
     return <div>Error: {visitorError.message}</div>;
   }
 
-  if (!visitorData?.visitorId || !userId) {
-    return <div>Authentication failed</div>;
-  }
+  //   if (!visitorData?.visitorId || !userId) {
+  //     return <div>Authentication failed</div>;
+  //   }
 
-  const contextValue = {
-    authToken: userId,
-    visitorId: visitorData.visitorId,
+  const contextValue: FingerprintContextType = {
+    authToken: userId ?? undefined,
+    visitorId: visitorData?.visitorId,
   };
 
   return (
