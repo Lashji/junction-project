@@ -1,26 +1,15 @@
-"use client";
+import { cookies } from "next/headers";
+import HomeClient from "./_components/home-client";
+import FingerprintProvider from "./_components/fingerprint-provider";
 
-import Polls from "./_components/polls";
-import { useVisitorAuth } from "./_hooks/useVisitorAuth";
-
-export default function Page() {
-  const { isLoading, error, authToken } = useVisitorAuth();
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
-  if (!authToken) {
-    return <div>Authentication failed</div>;
-  }
+export default async function Page() {
+  const cookieStore = await cookies();
+  const tempIdToken = cookieStore.get("temp_id_token")?.value ?? undefined;
+  const tempRawToken = cookieStore.get("temp_raw_token")?.value ?? undefined;
 
   return (
-    <main className="container mx-auto p-4">
-      <Polls />
-    </main>
+    <FingerprintProvider tempIdToken={tempIdToken} tempRawToken={tempRawToken}>
+      <HomeClient />
+    </FingerprintProvider>
   );
 }

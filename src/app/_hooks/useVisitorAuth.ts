@@ -25,14 +25,11 @@ export function useVisitorAuth(): UseVisitorAuthResult {
 
   // You can add additional authentication logic here if needed
   // For now, we'll just use the visitorId as the auth token
-  const authToken = visitorData?.visitorId ?? null;
+  const authToken = visitorData?.requestId ?? null;
 
   const fetchUserId = async () => {
     const response = await fetch(
       `${env.NEXT_PUBLIC_BACKEND_URL}/auth/getUserIdWeak?requestId=${authToken}`,
-      {
-        method: "GET",
-      },
     );
     const data = (await response.json()) as { userId: string };
     return data.userId;
@@ -41,6 +38,7 @@ export function useVisitorAuth(): UseVisitorAuthResult {
   const { data: userId, isLoading: isUserIdLoading } = useQuery({
     queryKey: ["userId"],
     queryFn: fetchUserId,
+    enabled: false,
   });
 
   return {

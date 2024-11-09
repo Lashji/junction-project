@@ -15,3 +15,24 @@ export type Poll = {
   userVoted: boolean;
   justVoted: boolean;
 };
+
+export type TokenData = {
+  iss: string;
+  nbf: number;
+  iat: number;
+  exp: number;
+  aud: string;
+  amr: string[];
+  at_hash: string;
+  sid: string;
+  sub: string;
+  auth_time: number;
+  idp: string;
+  name: string;
+  family_name: string;
+  given_name: string;
+  gender: string;
+  birthdate: string;
+  idp_issuer: string;
+  sandbox: boolean;
+};
