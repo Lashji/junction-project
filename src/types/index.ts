@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type Comment = {
   id: string;
   text: string;
@@ -36,3 +38,12 @@ export type TokenData = {
   idp_issuer: string;
   sandbox: boolean;
 };
+
+export const credentialDataSchema = z.object({
+  name: z.string(),
+  gender: z.string(),
+  birthDate: z.string(),
+  nationality: z.string(),
+});
+
+export type CredentialData = z.infer<typeof credentialDataSchema>;
