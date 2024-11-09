@@ -32,6 +32,8 @@ export const env = createEnv({
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_BASE_URL: z.string().url(),
+    NEXT_PUBLIC_BACKEND_URL: z.string().url(),
+    NEXT_PUBLIC_FINGERPRINTJS_TOKEN: z.string(),
   },
 
   /**
@@ -51,6 +53,9 @@ export const env = createEnv({
     SIGNICAT_PRIVATE_SIGNING_KEY: process.env.SIGNICAT_PRIVATE_SIGNING_KEY,
     SIGNICAT_DOMAIN: process.env.SIGNICAT_DOMAIN,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+    NEXT_PUBLIC_FINGERPRINTJS_TOKEN:
+      process.env.NEXT_PUBLIC_FINGERPRINTJS_TOKEN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
