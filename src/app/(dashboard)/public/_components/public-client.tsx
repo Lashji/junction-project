@@ -267,34 +267,13 @@ export default function PublicPoll() {
 
   return (
     <div>
-      <h1 className="content-2xl h1class mb-4 text-center text-4xl font-bold">
-        Ongoing Polls
-      </h1>
-      <div className="mb-4 flex items-center">
-        <span className="content-sm mr-2 font-medium">Sort by:</span>
-        <Select
-          value={sortBy}
-          onValueChange={(value) => setSortBy(value as "top" | "new")}
-        >
-          <SelectTrigger className="w-[180px] bg-card">
-            <SelectValue placeholder="Select sorting" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem className="bg-card" value="top">
-              {" "}
-              Top Posts
-            </SelectItem>
-            <SelectItem value="new">Recent Posts</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
       <div className="space-y-4">
         {isLoading ? (
           <div>Loading...</div>
         ) : error ? (
           <div>{error.message}</div>
         ) : !unansweredPolls ? (
-          <div>Loading ....</div>
+          <div>Loading  ....</div>
         ) : (
           unansweredPolls.map((poll) => (
             <PollItem
@@ -350,41 +329,25 @@ function PollItem({
 
   return (
     <div
-      className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg"
-      onClick={onSelect}
+      className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg min-h-screen"
     >
-      {true && (
-        <div className="flex items-center justify-between">
-          <h2 className="content-lg mb-2 text-xl font-semibold">
-            {poll.title}
-          </h2>
+      <h2 className="content-lg mb-2 text-5xl font-semibold mt-6">
+        {poll.title}
+      </h2>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <BadgeCheck className="text-blue-500" size={42} />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Verified users only</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      )}
-
-      <p className="mb-3 text-sm">{poll.description}</p>
+      <p className="mb-5 mt-6 text-2xl">{poll.description}</p>
 
       {hasVoted ? (
         <></>
       ) : (
         <>
-          <div className="w-100 relative mb-2 flex h-10 overflow-hidden border-2 border-amber-600">
+          <div className="w-100 relative mb-5 flex h-40 overflow-hidden border-2 border-amber-600 mb-16 mt-8">
             <div
               className={`bg-[#FFB89A] transition-all duration-500 ease-out`}
               style={{ width: `50%` }}
             />
             <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[17px] font-medium text-primary">
-              Vote to see the real results!
+              Vote to see the results!
             </p>
             <div
               className={`border-l-2 border-amber-500 bg-[#FFA97A] transition-all duration-500 ease-out`}
@@ -392,19 +355,23 @@ function PollItem({
             />
           </div>
 
-          <div className="mb-2 flex justify-between">
+          <div className="mb-4 flex justify-between">
             {poll.options.map((option) => (
-              <Button
-                className="p-7"
-                key={option}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onVote(poll.id, option);
-                }}
-                variant="outline"
-              >
-                Vote {option}
-              </Button>
+              <>
+                <Button
+                  className="block h-96 w-[45vw]"
+                  key={option}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onVote(poll.id, option);
+                  }}
+                  variant="outline"
+                >
+                  <p className="text-sl -mt-5">Vote for:</p>
+                  <p className="text-3xl -mb-5">{option}</p>
+
+                </Button>
+              </>
             ))}
           </div>
         </>
@@ -414,10 +381,6 @@ function PollItem({
         <span>
           <ArrowUpDown className="mr-1 inline" size={16} />
           {totalVotes} votes
-        </span>
-        <span>
-          <MessageSquare className="mr-1 inline" size={16} />
-          {poll.comments.length} comments
         </span>
       </div>
     </div>

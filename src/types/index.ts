@@ -45,6 +45,8 @@ export type Poll = {
   options: string[];
   answers: Answer[];
   comments: Comment[];
+  requireVerification: boolean;
+  isActionable: boolean;
 };
 
 export type Threads = Record<string, Comment[]>;
