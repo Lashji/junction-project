@@ -196,7 +196,7 @@ export default function Polls() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Poll App</h1>
+      <h1 className="mb-4 text-2xl font-bold">Polls</h1>
       <div className="mb-4 flex items-center">
         <span className="mr-2 text-sm font-medium">Sort by:</span>
         <Select
@@ -267,12 +267,8 @@ function PollItem({
       <h2 className="mb-2 text-lg font-semibold">{poll.question}</h2>
       {!poll.userVoted && (
         <>
-          <p className="mb-2 text-sm text-gray-500">Vote to see the results.</p>
-
           <div className="w-100 relative mb-2 flex h-8 overflow-hidden rounded-full">
-            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              add
-            </p>
+
             <div
               className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}

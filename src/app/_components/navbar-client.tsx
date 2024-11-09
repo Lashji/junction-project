@@ -10,9 +10,10 @@ export default function NavbarClient() {
   return (
     <>
       <div className="flex items-center gap-6">
-        <Link href="/" className="text-xl font-semibold">
-          Home
+        <Link href="/" className="text-xl font-light">
+          Quorum
         </Link>
+
       </div>
 
       <div className="flex items-center gap-4">
