@@ -173,13 +173,13 @@ export default function Polls() {
   } = useQuery({
     queryKey: ["polls"],
     queryFn: () => fetchUnAnsweredPolls(userId!),
-    enabled: isAuthenticated && !!userId,
+    enabled: !!userId,
   });
 
   const { data: userAnswers } = useQuery({
     queryKey: ["userAnswers"],
     queryFn: () => fetchUserAnswers(userId!),
-    enabled: isAuthenticated && !!userId,
+    enabled: !!userId,
   });
 
   const { mutate: answerPollMutation } = useMutation({
