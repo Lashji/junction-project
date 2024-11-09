@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { ThumbsUp, MessageSquare, Send } from "lucide-react";
@@ -13,8 +13,9 @@ import {
 } from "~/components/ui/popover";
 import Navbar from "~/app/_components/navbar";
 import { env } from "~/env";
-import { useQuery } from "@tanstack/react-query";
-import { Comment, Poll } from "~/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Answer, Comment, Vote, Poll } from "~/types";
+import { useAuth } from "~/app/_context/auth-context";
 
 const fetchPoll = async (pollId: string) => {
   const response = await fetch(
@@ -27,17 +28,143 @@ const fetchPoll = async (pollId: string) => {
   return data;
 };
 
+const fetchLastRepliedThreadForUser = async (
+  userId: string,
+  pollId: string,
+) => {
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getLastRepliedThreadForUser?userId=${userId}&pollId=${pollId}`,
+  );
+
+  const data = (await response.json()) as unknown as Comment;
+  console.log("last replied thread", data);
+
+  return data;
+};
+
+const fetchUserComments = async (userId: string) => {
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getUserComments?userId=${userId}`,
+  );
+
+  const data = (await response.json()) as unknown as Comment[];
+  console.log("user comments", data);
+
+  return data;
+};
+
+const fetchUserAnswers = async (userId: string) => {
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getUserAnswers?userId=${userId}`,
+  );
+
+  const data = (await response.json()) as unknown as Answer[];
+  console.log("user answers", data);
+
+  return data;
+};
+
+const answerPoll = async (pollId: string, answer: string, userId: string) => {
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/answerPoll?pollId=${pollId}&answer=${answer}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        answer,
+        pollId,
+        userId,
+      }),
+    },
+  );
+
+  const data = (await response.json()) as unknown as Answer;
+  console.log("ANSWER POLL", data);
+
+  return data;
+};
+
+const fetchCommentVotes = async (commentId: string) => {
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getCommentVotes?commentId=${commentId}`,
+  );
+
+  const data = (await response.json()) as unknown as Vote;
+  console.log("comment votes", data);
+
+  return data;
+};
+
+// Add this new component for a better discussion input
+function DiscussionInput({
+  value,
+  onChange,
+  onSubmit,
+  userAnswered,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onSubmit: () => void;
+  userAnswered: boolean;
+}) {
+  return (
+    <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
+      <h3 className="mb-4 text-lg font-semibold">Join the Discussion</h3>
+      <div className="space-y-4">
+        <textarea
+          value={value}
+          onChange={onChange}
+          placeholder={
+            userAnswered
+              ? "Share your thoughts on this poll..."
+              : "Vote on the poll to join the discussion"
+          }
+          disabled={!userAnswered}
+          className="min-h-[120px] w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            {!userAnswered && "You need to vote before commenting"}
+          </p>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                onClick={userAnswered ? onSubmit : undefined}
+                className="bg-amber-500 px-6 hover:bg-amber-600 disabled:opacity-50"
+                disabled={!userAnswered || !value.trim()}
+              >
+                Post Comment
+              </Button>
+            </PopoverTrigger>
+            {!userAnswered && (
+              <PopoverContent className="w-auto p-3">
+                <p className="text-sm text-gray-600">
+                  Please vote on the poll first
+                </p>
+              </PopoverContent>
+            )}
+          </Popover>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PollDetail() {
-  // const [poll, setPoll] = useState<Poll>(pollData);
-  const [newComment, setNewComment] = useState("");
+  const [showRandomComment, setShowRandomComment] = useState(false);
   const [randomComment, setRandomComment] = useState<Comment | null>(null);
   const [replyToRandom, setReplyToRandom] = useState("");
-  const [showRandomComment, setShowRandomComment] = useState(false);
+  const [newComment, setNewComment] = useState("");
   const { id } = useParams();
 
+  const { userId } = useAuth();
   const randomCommentRef = useRef<HTMLDivElement>(null);
 
   console.log("ID", id);
+
+  const queryClient = useQueryClient();
 
   const { data: selectedPollData } = useQuery({
     queryKey: ["poll"],
@@ -45,10 +172,28 @@ export default function PollDetail() {
     enabled: !!id,
   });
 
-  // const totalVotes = poll.votes[0] + poll.votes[1];
-  // const percentages = poll.votes.map((votes) =>
-  //   ((votes / totalVotes) * 100).toFixed(1),
-  // );
+  const { data: userAnswers } = useQuery({
+    queryKey: ["userAnswers"],
+    queryFn: () => (typeof id === "string" ? fetchUserAnswers(id) : null),
+    enabled: !!id,
+  });
+
+  const { mutate: addComment } = useMutation({
+    mutationKey: ["addComment"],
+    mutationFn: (comment: string) =>
+      answerPoll(selectedPollData?.id!, comment, userId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["poll"] });
+    },
+  });
+
+  const userAnswered = useMemo(() => {
+    return userAnswers?.some(
+      (answer) => answer.pollId === selectedPollData?.id,
+    );
+  }, [userAnswers, selectedPollData?.id]);
+
+  console.log("selectedPollData", selectedPollData);
 
   const handleVote = (optionIndex: 0 | 1) => {
     // setPoll((prevPoll) => {
@@ -60,8 +205,8 @@ export default function PollDetail() {
     //     userVoted: optionIndex,
     //   };
     // });
-    setShowRandomComment(true);
-    selectRandomComment(optionIndex);
+    // setShowRandomComment(true);
+    // selectRandomComment(optionIndex);
   };
 
   const selectRandomComment = (votedOption: 0 | 1) => {
@@ -99,11 +244,11 @@ export default function PollDetail() {
     //         : comment,
     //     ),
     //   }));
-    setReplyToRandom("");
-    setShowRandomComment(false);
-    setTimeout(() => {
-      randomCommentRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+    // setReplyToRandom("");
+    // setShowRandomComment(false);
+    // setTimeout(() => {
+    //   randomCommentRef.current?.scrollIntoView({ behavior: "smooth" });
+    // }, 100);
   };
   // }
 
@@ -112,23 +257,8 @@ export default function PollDetail() {
   };
 
   const handleAddComment = () => {
-    // if (newComment.trim() && poll.userVoted !== null) {
-    //   setPoll((prevPoll) => ({
-    //     ...prevPoll,
-    //     comments: [
-    //       {
-    //         id: Date.now().toString(),
-    //         text: newComment.trim(),
-    //         likes: 0,
-    //         userLiked: false,
-    //         userVote: poll.userVoted,
-    //         replies: [],
-    //       },
-    //       ...prevPoll.comments,
-    //     ],
-    //   }));
-    //   setNewComment("");
-    // }
+    addComment(newComment);
+    setNewComment("");
   };
 
   const handleLikeComment = (commentId: string) => {
@@ -151,10 +281,7 @@ export default function PollDetail() {
   };
 
   const handleReply = (commentId: string, replyText: string) => {
-    // setPoll((prevPoll) => ({
-    //   ...prevPoll,
-    //   comments: addReply(prevPoll.comments, commentId, replyText),
-    // }));
+    // Type-safe comment handling would go here
   };
 
   const addReply = (comments: Comment[], id: string, replyText: string) => {
@@ -186,206 +313,212 @@ export default function PollDetail() {
     // };
   };
 
+  const voteCounts = useMemo(() => {
+    if (!selectedPollData) return [0, 0];
+    const [a, b] = selectedPollData.options;
+    const aVotes = selectedPollData.answers.filter(
+      (answer) => answer.answer === a,
+    ).length;
+    const bVotes = selectedPollData.answers.filter(
+      (answer) => answer.answer === b,
+    ).length;
+    return [aVotes, bVotes];
+  }, [selectedPollData?.answers, selectedPollData?.options]);
+
+  const percentages = useMemo(() => {
+    if (!selectedPollData) return [0, 0];
+    const totalVotes = selectedPollData.answers.length;
+    const [a, b] = selectedPollData.options;
+
+    const aVotes = voteCounts[0];
+    const bVotes = voteCounts[1];
+
+    const aPercentage = aVotes ? (aVotes / totalVotes) * 100 : 0;
+    const bPercentage = bVotes ? (bVotes / totalVotes) * 100 : 0;
+
+    return [aPercentage, bPercentage];
+  }, [voteCounts, selectedPollData?.answers.length, selectedPollData?.options]);
+
+  if (!selectedPollData) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <Navbar />
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto max-w-4xl px-4 py-6">
         <Link
           href="/"
-          className="mb-4 inline-block text-blue-500 hover:underline"
+          className="mb-6 inline-flex items-center text-blue-500 hover:text-blue-600"
         >
-          &larr; Back to Polls
+          &larr; <span className="ml-2">Back to Polls</span>
         </Link>
 
-        <div className="rounded-lg bg-card-foreground p-4 shadow transition-all duration-300 hover:shadow-lg">
-          {selectedPollData && JSON.stringify(selectedPollData)}
-          {/* <h1 className="pt-2 text-2xl font-bold">{poll.question}</h1> */}
+        <div className="rounded-xl bg-white p-6 shadow-md transition-shadow duration-300 hover:shadow-lg">
+          <h1 className="mb-6 text-2xl font-bold">{selectedPollData.title}</h1>
+          <p className="mb-6 text-gray-600">{selectedPollData.description}</p>
 
-          {/* <div className="mb-6 pt-4">
-            <div className="mb-2 h-8 overflow-hidden rounded-full bg-gray-200">
-              <div
-                className="h-full bg-blue-500 transition-all duration-500 ease-out"
-                style={{
-                  width: poll.userVoted !== null ? `${percentages[0]}%` : "50%",
-                }}
-              />
-            </div>
-            <div className="mb-2 flex justify-between pt-2">
-              {poll.options.map((option, index) => (
-                <div key={option} className="text-center">
-                  <Button
-                    onClick={() => handleVote(index as 0 | 1)}
-                    disabled={poll.userVoted !== null}
-                    variant={poll.userVoted === index ? "default" : "outline"}
-                  >
-                    {option}
-                  </Button>
-                  {poll.userVoted !== null && (
-                    <div className="mt-2">
-                      <div className="font-bold">{percentages[index]}%</div>
-                      <div className="text-sm text-gray-500">
-                        {poll.votes[index]} votes
-                      </div>
+          <div className="mb-8">
+            {!userAnswered ? (
+              <>
+                <div className="relative mb-4 h-12 overflow-hidden rounded-lg border-2 border-amber-600">
+                  <div className="absolute h-full w-1/2 bg-[#FFB89A]" />
+                  <div className="absolute h-full w-1/2 translate-x-full border-l-2 border-amber-500 bg-[#FFA97A]" />
+                  <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-medium text-primary">
+                    Vote to see the real results!
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedPollData.options.map((option, index) => (
+                    <Button
+                      key={option}
+                      onClick={() => handleVote(index as 0 | 1)}
+                      className="h-14 w-full text-lg"
+                      variant="outline"
+                    >
+                      Vote {option}
+                    </Button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4">
+                {selectedPollData.options.map((option, index) => (
+                  <div key={option} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{option}</span>
+                      <span className="text-sm text-gray-500">
+                        {voteCounts[index]} votes (
+                        {percentages[index]?.toFixed(1)}%)
+                      </span>
                     </div>
-                  )}
-                </div> */}
-          {/* ))} */}
-        </div>
-      </div>
-
-      {/* {showRandomComment && randomComment && (
-            <div className="mb-6 rounded-lg bg-gray-100 p-4">
-              <h3 className="mb-2 font-semibold">What do you think of this?</h3>
-              <p className="mb-2">{randomComment.text}</p>
-              <div className="flex gap-2">
-                <Input
-                  value={replyToRandom}
-                  onChange={(e) => setReplyToRandom(e.target.value)}
-                  placeholder="Your reply..."
-                />
-                <Button onClick={handleReplyToRandom}>Reply</Button>
-                <Button variant="outline" onClick={handleSkipRandom}>
-                  Skip
-                </Button>
+                    <div className="h-4 overflow-hidden rounded-full bg-gray-100">
+                      <div
+                        className="h-full bg-[#FFB89A] transition-all duration-500"
+                        style={{ width: `${percentages[index]}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div> */}
-      {/* )} */}
-      <div className="mb-6">
-        <h2 className="mb-2 text-xl font-semibold">Comments</h2>
-        <div className="mb-4 flex gap-2">
-          {/* <Input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-              /> */}
-          {/* <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    onClick={
-                      poll.userVoted !== null ? handleAddComment : undefined
-                    }
-                  >
-                    Post
-                  </Button>
-                </PopoverTrigger>
-                {poll.userVoted === null && (
-                  <PopoverContent className="w-auto">
-                    <p>Before commenting, please vote</p>
-                  </PopoverContent>
-                )}
-              </Popover> */}
+            )}
+          </div>
         </div>
-        <div className="space-y-4">
-          {/* {poll.comments.map((comment) => (
+
+        <div className="mt-8">
+          <h2 className="mb-4 text-xl font-semibold">Discussion</h2>
+
+          <DiscussionInput
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            onSubmit={handleAddComment}
+            userAnswered={userAnswered ?? false}
+          />
+
+          {/* Comments list */}
+          <div className="space-y-4">
+            {selectedPollData?.comments?.length > 0 ? (
+              selectedPollData.comments.map((comment) => (
                 <CommentItem
                   key={comment.id}
                   comment={comment}
                   onLike={handleLikeComment}
                   onReply={handleReply}
-                  pollOptions={poll.options}
+                  pollOptions={selectedPollData.options}
                   isRandom={comment.id === randomComment?.id}
                   randomCommentRef={randomCommentRef}
                 />
-              ))} */}
+              ))
+            ) : (
+              <div className="rounded-lg bg-white p-8 text-center shadow-sm">
+                <MessageSquare className="mx-auto mb-3 h-8 w-8 text-gray-400" />
+                <p className="text-gray-500">
+                  No comments yet. Be the first to share your thoughts!
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      {/* </div> */}
-      {/* </div> */}
     </>
   );
+}
+
+interface CommentItemProps {
+  comment: Comment;
+  onLike: (id: string) => void;
+  onReply: (id: string, text: string) => void;
+  pollOptions: string[];
+  isRandom?: boolean;
+  randomCommentRef?: React.RefObject<HTMLDivElement>;
+  depth?: number;
 }
 
 function CommentItem({
   comment,
   onLike,
   onReply,
-  pollOptions,
   isRandom,
   randomCommentRef,
   depth = 0,
-}: {
-  comment: Comment;
-  onLike: (id: string) => void;
-  onReply: (id: string, text: string) => void;
-  pollOptions: [string, string];
-  isRandom?: boolean;
-  randomCommentRef?: React.RefObject<HTMLDivElement>;
-  depth?: number;
-}) {
+}: CommentItemProps) {
   const [replyText, setReplyText] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
 
-  const handleReply = () => {
-    if (replyText.trim()) {
-      onReply(comment.id, replyText.trim());
-      setReplyText("");
-      setShowReplyInput(false);
-    }
-  };
-
   return (
     <div
-      className={`${depth > 0 ? "ml-4 border-l-2 pl-4" : ""}`}
+      className={`${depth > 0 ? "ml-6 border-l-2 border-gray-100 pl-6" : ""}`}
       ref={isRandom ? randomCommentRef : undefined}
     >
-      <div className="rounded-lg bg-white p-4 shadow">
-        {/* <p className="mb-2">{comment.text}</p>
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>
-            Voted for:{" "}
-            {comment.userVote !== null
-              ? pollOptions[comment.userVote]
-              : "Unknown"}
-          </span>
-          <div className="flex items-center gap-2">
+      <div className="rounded-lg bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-md">
+        <p className="mb-3 text-gray-800">{comment.content}</p>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-amber-600">Voted: {comment.pollAnswer}</span>
+          <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onLike(comment.id)}
-              disabled={comment.userLiked}
+              className="text-gray-500 hover:text-blue-500"
             >
-              <ThumbsUp
-                className={`mr-1 h-4 w-4 ${comment.userLiked ? "text-blue-500" : ""}`}
-              />
-              {comment.likes}
+              <ThumbsUp className="mr-2 h-4 w-4" />
+              Like
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowReplyInput(!showReplyInput)}
+              className="text-gray-500 hover:text-blue-500"
             >
-              <MessageSquare className="mr-1 h-4 w-4" />
+              <MessageSquare className="mr-2 h-4 w-4" />
               Reply
             </Button>
           </div>
-        </div> */}
+        </div>
+
         {showReplyInput && (
-          <div className="mt-2 flex gap-2">
+          <div className="mt-4 flex gap-3">
             <Input
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Your reply..."
+              placeholder="Write a reply..."
+              className="flex-1"
             />
-            <Button onClick={handleReply}>
+            <Button
+              onClick={() => {
+                if (replyText.trim()) {
+                  onReply(comment.id, replyText.trim());
+                  setReplyText("");
+                  setShowReplyInput(false);
+                }
+              }}
+              className="px-6"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
         )}
       </div>
-      {/* {comment.replies.length > 0 && (
-        <div className="mt-2">
-          {comment.replies.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              onLike={onLike}
-              onReply={onReply}
-              pollOptions={pollOptions}
-              depth={depth + 1}
-            />
-          ))}
-        </div>
-      )} */}
     </div>
   );
 }

@@ -9,7 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { ArrowUpDown, BadgeCheck, MessageSquare, OctagonAlert, Sparkle, Vote } from "lucide-react";
+import {
+  ArrowUpDown,
+  BadgeCheck,
+  MessageSquare,
+  OctagonAlert,
+  Sparkle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   type Poll,
@@ -25,8 +31,12 @@ import { useAuth } from "../_context/auth-context";
 import AnswerItem from "./answer-item";
 import "~/styles/CustomUnderline.css";
 import Link from "next/link";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "~/components/ui/tooltip";
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "~/components/ui/tooltip";
 
 const fetchUnAnsweredPolls = async (userId: string) => {
   console.log("fetching polls", userId);
@@ -305,7 +315,11 @@ export default function Polls() {
           ))
         )}
         {userAnswers?.map((answer) => (
-          <Link key={answer.pollId} href={`/post/${answer.pollId}`} className="mt-4 block">
+          <Link
+            key={answer.pollId}
+            href={`/post/${answer.pollId}`}
+            className="mt-4 block"
+          >
             <AnswerItem key={answer.id} answer={answer} />
           </Link>
         ))}
@@ -345,9 +359,8 @@ function PollItem({
       className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg"
       onClick={onSelect}
     >
-
       <div className="flex items-center justify-between">
-        <h2 className="content-lg text-xl mb-2 font-semibold">{poll.title}</h2>
+        <h2 className="content-lg mb-2 text-xl font-semibold">{poll.title}</h2>
 
         <div className="flex space-x-2">
           {poll.requireVerification && (
@@ -376,24 +389,20 @@ function PollItem({
             </TooltipProvider>
           )}
         </div>
-
       </div>
 
-
-      <p className="text-sm mb-3">{poll.description}</p>
+      <p className="mb-3 text-sm">{poll.description}</p>
 
       {hasVoted ? (
-        <>
-        </>
+        <></>
       ) : (
-
         <>
           <div className="w-100 relative mb-2 flex h-10 overflow-hidden border-2 border-amber-600">
             <div
               className={`bg-[#FFB89A] transition-all duration-500 ease-out`}
               style={{ width: `50%` }}
             />
-            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary text-[17px] font-medium">
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[17px] font-medium text-primary">
               Vote to see the real results!
             </p>
             <div
@@ -403,7 +412,6 @@ function PollItem({
           </div>
 
           <div className="mb-2 flex justify-between">
-
             {poll.options.map((option) => (
               <Button
                 className="p-7"
