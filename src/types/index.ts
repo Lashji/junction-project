@@ -1,4 +1,4 @@
-
+import { z } from "zod";
 
 export type TokenData = {
   iss: string;
@@ -21,6 +21,15 @@ export type TokenData = {
   sandbox: boolean;
 };
 
+export const credentialDataSchema = z.object({
+  name: z.string(),
+  gender: z.string(),
+  birthDate: z.string(),
+  nationality: z.string(),
+});
+
+export type CredentialData = z.infer<typeof credentialDataSchema>;
+
 export type Answer = {
   id: string;
   userId: string;
@@ -28,19 +37,6 @@ export type Answer = {
   answer: string;
   createdAt: string;
 };
-
-/**
-export type Poll = {
-  id: number;
-  question: string;
-  options: [string, string];
-  votes: [number, number];
-  comments: [Comment[], Comment[]];
-  createdAt: Date;
-  userVoted: boolean;
-  justVoted: boolean;
-};
-*/
 
 export type Poll = {
   id: string;
@@ -50,16 +46,6 @@ export type Poll = {
   answers: Answer[];
   comments: Comment[];
 };
-
-/**
- * export type Comment = {
-  id: string;
-  text: string;
-  likes: number;
-  userLiked: boolean;
-};
-
- */
 
 export type Threads = Record<string, Comment[]>;
 
