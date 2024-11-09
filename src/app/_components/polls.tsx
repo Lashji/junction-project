@@ -372,20 +372,38 @@ function PollItem({
           </div>
         </>
       ) : (
-        <div className="mb-2 flex justify-between">
-          {poll.options.map((option) => (
-            <Button
-              key={option}
-              onClick={(e) => {
-                e.stopPropagation();
-                onVote(poll.id, option);
-              }}
-              variant="outline"
-            >
-              Vote {option}
-            </Button>
-          ))}
-        </div>
+
+        <>
+          <div className="w-100 relative mb-2 flex h-8 overflow-hidden border-2 border-amber-600">
+            <div
+              className={`bg-[#FFB89A] transition-all duration-500 ease-out`}
+              style={{ width: `50%` }}
+            />
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary">
+              Vote to see the real results!
+            </p>
+            <div
+              className={`border-l-2 border-amber-500 bg-[#FFA97A] transition-all duration-500 ease-out`}
+              style={{ width: `50%` }}
+            />
+          </div>
+
+          <div className="mb-2 flex justify-between">
+
+            {poll.options.map((option) => (
+              <Button
+                key={option}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVote(poll.id, option);
+                }}
+                variant="outline"
+              >
+                Vote {option}
+              </Button>
+            ))}
+          </div>
+        </>
       )}
 
       <div className="content-sm content-gray-500 mt-2 flex items-center justify-between">
