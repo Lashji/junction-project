@@ -116,7 +116,7 @@ export default function Polls() {
       polls.map((poll) => {
         if (poll.id === pollId && !poll.userVoted) {
           const newVotes = [...poll.votes];
-          newVotes[optionIndex]!++;
+          newVotes[optionIndex] ? newVotes[optionIndex]++ : 0;
           return {
             ...poll,
             votes: newVotes as [number, number],
@@ -147,7 +147,7 @@ export default function Polls() {
         if (poll.id === pollId) {
           const newComments = [...poll.comments];
           newComments[optionIndex] = [
-            ...newComments[optionIndex]!,
+            ...newComments[optionIndex] ?? [],
             {
               id: Date.now().toString(),
               text: comment,
@@ -171,11 +171,11 @@ export default function Polls() {
       polls.map((poll) => {
         if (poll.id === pollId) {
           const newComments = [...poll.comments];
-          newComments[optionIndex] = newComments[optionIndex]!.map((comment) =>
+          newComments[optionIndex] = newComments[optionIndex] ? newComments[optionIndex].map((comment) =>
             comment.id === commentId && !comment.userLiked
               ? { ...comment, likes: comment.likes + 1, userLiked: true }
               : comment,
-          );
+          ) : [];
           return { ...poll, comments: newComments as [Comment[], Comment[]] };
         }
         return poll;
