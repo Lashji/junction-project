@@ -24,6 +24,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../_context/auth-context";
 import AnswerItem from "./answer-item";
 import "~/styles/CustomUnderline.css";
+import Link from "next/link";
 
 const fetchUnAnsweredPolls = async (userId: string) => {
   console.log("fetching polls", userId);
@@ -302,7 +303,9 @@ export default function Polls() {
           ))
         )}
         {userAnswers?.map((answer) => (
-          <AnswerItem key={answer.id} answer={answer} />
+          <Link key={answer.pollId} href={`/post/${answer.pollId}`} className="mt-4 block">
+            <AnswerItem key={answer.id} answer={answer} />
+          </Link>
         ))}
       </div>
     </div>
@@ -344,32 +347,6 @@ function PollItem({
 
       {hasVoted ? (
         <>
-          <div className="relative mb-2 flex h-8 overflow-hidden rounded-full">
-            {poll.options.map((option, index) => (
-              <div
-                key={option}
-                className={`${index === 0 ? "bg-blue-500" : "bg-red-500"} transition-all duration-500 ease-out`}
-                style={{
-                  width: `${optionStats[option]?.percentage}%`,
-                  position: "relative",
-                }}
-              >
-                <span className="content-white absolute inset-0 flex items-center justify-center">
-                  {optionStats[option]?.percentage}%
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="content-sm mb-2 flex justify-between">
-            {poll.options.map((option, index) => (
-              <span
-                key={option}
-                className={`content-${index === 0 ? "blue" : "red"}-500`}
-              >
-                {option}: {optionStats[option]?.percentage}%
-              </span>
-            ))}
-          </div>
         </>
       ) : (
 

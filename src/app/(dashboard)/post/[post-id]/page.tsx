@@ -12,6 +12,9 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import Navbar from "~/app/_components/navbar";
+import { env } from "~/env";
+import { useQuery } from "@tanstack/react-query";
+
 
 type Comment = {
   id: string;
@@ -30,6 +33,23 @@ type Poll = {
   comments: Comment[];
   userVoted: 0 | 1 | null;
 };
+
+
+
+const fetchPoll = async (pollId: string) => {
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getPoll?pollId=${pollId}`,
+  );
+
+  const data = (await response.json()) as unknown as Poll;
+  console.log("GET POLL ", data);
+
+  return data;
+};
+
+
+
+
 
 const pollData: Poll = {
   id: 1,
@@ -74,6 +94,17 @@ export default function PollDetail() {
   const [showRandomComment, setShowRandomComment] = useState(false);
   const { id } = useParams();
   const randomCommentRef = useRef<HTMLDivElement>(null);
+
+
+  
+  const { data: selectedPollData } = useQuery({
+    queryKey: ["poll"],
+    queryFn: () => (selectedPoll ? fetchPoll(selectedPoll.id) : null),
+    enabled: !!selectedPoll,
+  });
+
+
+  
 
   const totalVotes = poll.votes[0] + poll.votes[1];
   const percentages = poll.votes.map((votes) =>

@@ -35,6 +35,7 @@ export default function AnswerItem({ answer }: { answer: Answer }) {
   const firstOptionPercentage = parseInt(((firstOptionVotes / totalVotes) * 100 || 0).toFixed(1));
 
   return (
+    
     <div className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg">
       <h2 className="content-lg mb-2 font-semibold">{poll.title}</h2>
 
