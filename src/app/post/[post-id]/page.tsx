@@ -1,10 +1,9 @@
+"use client";
+import { useRouter } from "next/navigation";
 
 export default function Post() {
-
-
   return <div></div>;
 }
-
 
 /** 
  * 'use client'
