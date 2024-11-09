@@ -6,9 +6,13 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
+import { api } from "~/trpc/react";
+import { useStore } from "~/store";
 
 export default function Account() {
   const { isAuthenticated, wallet, did, nationality } = useAuth();
+
+  const { mutateAsync: verifyCredential } = api.verifier.verify.useMutation();
 
   if (!isAuthenticated) {
     return (
@@ -31,6 +35,26 @@ export default function Account() {
       </div>
     );
   }
+
+  const handleVerify = async () => {
+    const res = (await verifyCredential()) as {
+      qrCode: string;
+      sessionID: string;
+    };
+
+    const split = res.qrCode.split("://?request_uri=");
+    console.log("split", split);
+    const callbackUrl = split[1]!;
+
+    const callbackResp = await fetch(callbackUrl);
+    const callbackRespData = await callbackResp.arrayBuffer();
+
+    console.log("callbackRespData", callbackRespData);
+
+    const proof = await wallet?.createProof(new Uint8Array(callbackRespData));
+
+    console.log("proof", proof);
+  };
 
   if (!wallet) {
     return (
@@ -89,6 +113,8 @@ export default function Account() {
             </div>
           </CardContent>
         </Card>
+
+        <Button onClick={() => handleVerify()}>Verify</Button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { W3CCredential } from "@0xpolygonid/js-sdk";
 import { BadgeCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "~/app/_context/auth-context";
 import { useStore } from "~/store";
@@ -62,13 +63,18 @@ export default function SetupClient({ tempIdToken }: Props) {
     },
   );
 
+  const router = useRouter();
+
   useEffect(() => {
     if (data && wallet) {
-      setCredentialData(data as IssuedCredential);
-      const credential = W3CCredential.fromJSON(data);
+      const vc = (data as unknown as IssuedCredential).vc;
+
+      const credential = W3CCredential.fromJSON(vc);
       console.log("credential", credential);
 
       wallet.saveCredential(credential);
+
+      router.push("/account");
     }
   }, [data]);
 
@@ -76,5 +82,15 @@ export default function SetupClient({ tempIdToken }: Props) {
     return <div>Not authenticated</div>;
   }
 
-  return <>{error ? <div>{error.message}</div> : <div>Initialized</div>}</>;
+  return (
+    <>
+      {error ? (
+        <div>{error.message}</div>
+      ) : isLoadingCredential ? (
+        <div>Loading...</div>
+      ) : (
+        <div>Initialized</div>
+      )}
+    </>
+  );
 }
