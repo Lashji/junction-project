@@ -269,7 +269,7 @@ function PollItem({
       <h2 className="mb-2 text-lg font-semibold">{poll.question}</h2>
       {!poll.userVoted && (
         <>
-          <div className="w-100 relative mb-2 flex h-8 overflow-hidden rounded-full">
+          <div className="w-100 relative mb-2 flex h-8 overflow-hidden border-2 border-amber-600">
 
             <div
               className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
@@ -288,7 +288,7 @@ function PollItem({
       {poll.userVoted ? (
         <>
           <>
-            <div className="relative mb-2 flex h-8 overflow-hidden rounded-full">
+            <div className="relative mb-2 flex h-8 overflow-hidden">
               <div
                 className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
                 style={{ width: `${percentages[0]}%`, position: "relative" }}
@@ -338,7 +338,7 @@ function PollItem({
           </Button>
         </div>
       )}
-      <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+      <div className="mt-2 flex items-center justify-between text-sm text-gray-500 text-primary">
         <span>
           <ArrowUpDown className="mr-1 inline" size={16} />
           {totalVotes} votes
