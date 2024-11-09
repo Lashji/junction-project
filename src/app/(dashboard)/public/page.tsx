@@ -1,8 +1,5 @@
-export default function Page() {
+import PublicPoll from "./_components/public-client";
 
-    return (
-        <div>
-            <h1>Page</h1>
-        </div>
-    );
+export default async function Page() {
+  return <PublicPoll />;
 }
