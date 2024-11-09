@@ -1,18 +1,13 @@
 import { cookies } from "next/headers";
-import { Suspense } from "react";
-import VerifiedAccountInitializer from "./_components/verified-account-initializer";
+import AccountLoader from "./_components/account-loader";
 
-async function CookieHandler() {
+export default async function AccountPage() {
   const cookieStore = await cookies();
   const tempIdToken = cookieStore.get("temp_id_token")?.value;
 
-  return <VerifiedAccountInitializer tempIdToken={tempIdToken} />;
-}
+  if (!tempIdToken) {
+    return <div>No verification token found</div>;
+  }
 
-export default function AccountPage() {
-  return (
-    <Suspense fallback={<div>Initializing...</div>}>
-      <CookieHandler />
-    </Suspense>
-  );
+  return <AccountLoader tempIdToken={tempIdToken} />;
 }

@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { useStore } from "~/store/index";
 
 export function useVerifiedAccount(tempIdToken?: string) {
-  const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { initializeVerifiedAccount } = useStore();
+  const { initializeVerifiedAccount, setInitialized } = useStore();
 
   useEffect(() => {
     async function initialize() {
@@ -18,7 +17,7 @@ export function useVerifiedAccount(tempIdToken?: string) {
         console.log("Initializing verified account", tempIdToken);
 
         initializeVerifiedAccount(tempIdToken);
-        setIsInitialized(true);
+        setInitialized(true);
       } catch (err) {
         setError(
           err instanceof Error
@@ -31,7 +30,7 @@ export function useVerifiedAccount(tempIdToken?: string) {
     }
 
     void initialize();
-  }, [tempIdToken, initializeVerifiedAccount]);
+  }, [tempIdToken, initializeVerifiedAccount, setInitialized]);
 
-  return { isInitialized, isLoading, error };
+  return { isLoading, error };
 }

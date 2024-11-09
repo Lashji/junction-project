@@ -36,6 +36,7 @@ import { proving } from "@iden3/js-jwz";
 import { defaultEthConnectionConfig, RHS_URL } from "./config";
 import { CircuitLoader } from "./circuit-loader";
 import { ActiveIdentityManager } from "./local-storage-service";
+import { type TokenData } from "~/types";
 
 export class WalletService {
   private wallet: IdentityWallet;
@@ -47,8 +48,11 @@ export class WalletService {
   private packageMgr?: PackageManager;
   private authHandler?: AuthHandler;
   private accountManager: ActiveIdentityManager;
+  private initialized: boolean;
 
-  constructor(subClaim: string) {
+  constructor(tokenData: TokenData) {
+    console.log("initializing wallet with data:", tokenData);
+    this.initialized = false;
     const { wallet, credWallet, dataStorage, kms } = this.createWallet();
     this.wallet = wallet;
     this.credWallet = credWallet;
@@ -58,10 +62,16 @@ export class WalletService {
     this.proofService = this.createProofService();
     this.accountManager = new ActiveIdentityManager();
 
-    this.init(subClaim).catch((e) => {
-      console.error("Error initializing wallet", e);
-    });
+    this.init(tokenData)
+      .then(() => (this.initialized = true))
+      .catch((e) => {
+        console.error("Error initializing wallet", e);
+      });
   }
+
+  getInitialized = () => {
+    return this.initialized;
+  };
 
   getWallet() {
     return this.wallet;
@@ -95,7 +105,7 @@ export class WalletService {
     return this.authHandler;
   }
 
-  private async init(subClaim: string) {
+  private async init(tokenData: TokenData) {
     await this.circuitLoader.init();
     this.packageMgr = this.createPackageMgr(
       await this.circuitLoader
@@ -105,7 +115,7 @@ export class WalletService {
       this.proofService.verifyState.bind(this.proofService),
     );
     this.authHandler = new AuthHandler(this.packageMgr, this.proofService);
-    await this.initializeIdentity(subClaim);
+    await this.initializeIdentity(tokenData.sub);
   }
 
   private createWallet() {

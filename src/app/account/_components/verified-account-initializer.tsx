@@ -1,16 +1,16 @@
 "use client";
 
-import { useVerifiedAccount } from "../_hooks/useVerifiedAccount";
-
 interface VerifiedAccountInitializerProps {
-  tempIdToken?: string;
+  isLoading: boolean;
+  error: Error | null;
+  initialized: boolean;
 }
 
 export default function VerifiedAccountInitializer({
-  tempIdToken,
+  isLoading,
+  error,
+  initialized,
 }: VerifiedAccountInitializerProps) {
-  const { isInitialized, isLoading, error } = useVerifiedAccount(tempIdToken);
-
   if (error) {
     return <div>Failed to verify account: {error.message}</div>;
   }
@@ -19,9 +19,9 @@ export default function VerifiedAccountInitializer({
     return <div>Verifying your account...</div>;
   }
 
-  if (isInitialized) {
-    return <div>Account verified successfully!</div>;
+  if (!initialized) {
+    return <div>No verification token found</div>;
   }
 
-  return <div>No verification token found</div>;
+  return <div>Account verified successfully!</div>;
 }

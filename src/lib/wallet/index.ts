@@ -1,15 +1,16 @@
-import "../config";
+import "./config";
 
 import type { W3CCredential } from "@0xpolygonid/js-sdk";
 import { DID } from "@iden3/js-iden3-core";
 
 import { WalletService } from "./wallet-services";
+import { type TokenData } from "~/types";
 
 export class Wallet {
   private walletService: WalletService;
 
-  constructor(subClaim: string) {
-    this.walletService = new WalletService(subClaim);
+  constructor(tokenData: TokenData) {
+    this.walletService = new WalletService(tokenData);
   }
 
   async syncCredentials(creds: W3CCredential[]) {
