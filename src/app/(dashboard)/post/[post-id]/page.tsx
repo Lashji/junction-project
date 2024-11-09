@@ -229,39 +229,42 @@ export default function PollDetail() {
         >
           &larr; Back to Polls
         </Link>
-        <h1 className="mb-4 text-2xl font-bold">{poll.question}</h1>
 
-        <div className="mb-6">
-          <div className="mb-2 h-8 overflow-hidden rounded-full bg-gray-200">
-            <div
-              className="h-full bg-blue-500 transition-all duration-500 ease-out"
-              style={{
-                width: poll.userVoted !== null ? `${percentages[0]}%` : "50%",
-              }}
-            />
-          </div>
-          <div className="mb-2 flex justify-between">
-            {poll.options.map((option, index) => (
-              <div key={option} className="text-center">
-                <Button
-                  onClick={() => handleVote(index as 0 | 1)}
-                  disabled={poll.userVoted !== null}
-                  variant={poll.userVoted === index ? "default" : "outline"}
-                >
-                  {option}
-                </Button>
-                {poll.userVoted !== null && (
-                  <div className="mt-2">
-                    <div className="font-bold">{percentages[index]}%</div>
-                    <div className="text-sm text-gray-500">
-                      {poll.votes[index]} votes
+        <div className="rounded-lg bg-card-foreground p-4 shadow transition-all duration-300 hover:shadow-lg">
+          <h1 className="pt-2 text-2xl font-bold">{poll.question}</h1>
+
+          <div className="mb-6 pt-4">
+            <div className="mb-2 h-8 overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                style={{
+                  width: poll.userVoted !== null ? `${percentages[0]}%` : "50%",
+                }}
+              />
+            </div>
+            <div className="mb-2 flex justify-between pt-2">
+              {poll.options.map((option, index) => (
+                <div key={option} className="text-center">
+                  <Button
+                    onClick={() => handleVote(index as 0 | 1)}
+                    disabled={poll.userVoted !== null}
+                    variant={poll.userVoted === index ? "default" : "outline"}
+                  >
+                    {option}
+                  </Button>
+                  {poll.userVoted !== null && (
+                    <div className="mt-2">
+                      <div className="font-bold">{percentages[index]}%</div>
+                      <div className="text-sm text-gray-500">
+                        {poll.votes[index]} votes
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        
         {showRandomComment && randomComment && (
           <div className="mb-6 rounded-lg bg-gray-100 p-4">
             <h3 className="mb-2 font-semibold">What do you think of this?</h3>
@@ -317,6 +320,7 @@ export default function PollDetail() {
               />
             ))}
           </div>
+        </div>
         </div>
       </div>
     </>
