@@ -38,11 +38,14 @@ export default function AnswerItem({ answer }: { answer: Answer }) {
     
     <div className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg">
       <h2 className="content-lg mb-2 font-semibold">{poll.title}</h2>
+      <p className="text-sm mb-2">{poll.description}</p>
 
-      <p className="font-medium text-center">Your answer: {answer.answer}</p>
 
-      <div className="relative mb-2 flex h-8 overflow-hidden">
-        <div className="relative mb-2 flex h-8 w-full overflow-hidden border-2 border-amber-600">
+      <p className="font-medium text-center">Your answer was: {answer.answer}</p>
+      
+
+      <div className="relative mb-2 flex h-10 overflow-hidden">
+        <div className="relative mb-2 flex h-10 w-full overflow-hidden border-2 border-amber-600">
           <div
             className={`bg-[#FFB89A] transition-all duration-500 ease-out flex items-center justify-center`}
             style={{ width: `${firstOptionPercentage}%` }}
@@ -66,9 +69,9 @@ export default function AnswerItem({ answer }: { answer: Answer }) {
           return (
             <span
               key={option}
-              className={`content-${index === 0 ? "blue" : "red"}-500`}
+              className={`content-${index === 0 ? "blue" : "red"}-500 text-card`}
             >
-              {option}: {percentage}%
+              <span className="font-bold">{option}: </span>{percentage}%
             </span>
           );
         })}

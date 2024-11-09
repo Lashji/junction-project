@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { ArrowUpDown, MessageSquare } from "lucide-react";
+import { ArrowUpDown, BadgeCheck, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   type Poll,
@@ -25,6 +25,8 @@ import { useAuth } from "../_context/auth-context";
 import AnswerItem from "./answer-item";
 import "~/styles/CustomUnderline.css";
 import Link from "next/link";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "~/components/ui/tooltip";
+
 
 const fetchUnAnsweredPolls = async (userId: string) => {
   console.log("fetching polls", userId);
@@ -288,7 +290,7 @@ export default function Polls() {
         ) : error ? (
           <div>{error.message}</div>
         ) : !unansweredPolls ? (
-          <div>No polls available</div>
+          <div>Loading ....</div>
         ) : (
           unansweredPolls.map((poll) => (
             <PollItem
@@ -343,7 +345,31 @@ function PollItem({
       className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg"
       onClick={onSelect}
     >
-      <h2 className="content-lg mb-2 font-semibold">{poll.title}</h2>
+
+      {
+        true &&
+
+        <div className="flex items-center justify-between">
+          <h2 className="content-lg text-xl mb-2 font-semibold">{poll.title}</h2>
+
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <BadgeCheck className="text-blue-500" size={42} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Verified users only</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+        </div>
+
+      }
+
+
+      <p className="text-sm mb-3">{poll.description}</p>
 
       {hasVoted ? (
         <>
@@ -351,12 +377,12 @@ function PollItem({
       ) : (
 
         <>
-          <div className="w-100 relative mb-2 flex h-8 overflow-hidden border-2 border-amber-600">
+          <div className="w-100 relative mb-2 flex h-10 overflow-hidden border-2 border-amber-600">
             <div
               className={`bg-[#FFB89A] transition-all duration-500 ease-out`}
               style={{ width: `50%` }}
             />
-            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary">
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary text-[17px] font-medium">
               Vote to see the real results!
             </p>
             <div
@@ -369,6 +395,7 @@ function PollItem({
 
             {poll.options.map((option) => (
               <Button
+                className="p-7"
                 key={option}
                 onClick={(e) => {
                   e.stopPropagation();
