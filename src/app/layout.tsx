@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+
 import "~/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
@@ -7,15 +9,20 @@ import { TRPCReactProvider } from "~/trpc/react";
 import { FpjsProvider } from "@fingerprintjs/fingerprintjs-pro-react";
 import { env } from "~/env";
 
+import FingerprintProvider from "./_components/fingerprint-provider";
+import Navbar from "./_components/navbar";
+
 export const metadata: Metadata = {
   title: "Quorum",
   description: "Discover and vote on topics you care about",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const tempIdToken = cookieStore.get("temp_id_token")?.value ?? undefined;
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
@@ -26,6 +33,10 @@ export default function RootLayout({
               region: "eu",
             }}
           >
+            {/* <p>navbar</p> */}
+            <FingerprintProvider tempIdToken={tempIdToken}>
+              <Navbar />
+            </FingerprintProvider>
             {children}
           </FpjsProvider>
         </TRPCReactProvider>
