@@ -1,10 +1,10 @@
             
-h1 {
+.h1class {
     padding: 30px 0 8px;
     position: relative;
   }
   
-  h1::before {
+  .h1class::before {
     content: "";
     position: absolute;
     left: 49%;

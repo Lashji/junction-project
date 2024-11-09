@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import Visitor from "./visitor";
 import { Comment, Poll } from "~/types";
 import "~/styles/CustomUnderline.css"
+import { ConsoleLogWriter } from "drizzle-orm";
 
 
 const initialPolls: Poll[] = [
@@ -61,7 +62,7 @@ const initialPolls: Poll[] = [
   },
   {
     id: 2,
-    question: "Cats or dogs?",
+    question: "Do you like Cats or dogs?",
     options: ["Cats", "Dogs"],
     votes: [120, 180],
     comments: [
@@ -105,6 +106,8 @@ export default function Polls() {
   const [sortBy, setSortBy] = useState<"top" | "new">("top");
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
 
+  console.log(polls, "polls");
+
   const sortedPolls = [...polls].sort((a, b) => {
     if (sortBy === "top") {
       return b.votes[0] + b.votes[1] - (a.votes[0] + a.votes[1]);
@@ -112,6 +115,9 @@ export default function Polls() {
       return b.createdAt.getTime() - a.createdAt.getTime();
     }
   });
+
+  console.log(sortedPolls, "sortedPolls");
+  
 
   const handleVote = (pollId: number, optionIndex: number) => {
     const oldPoll = polls[pollId];
@@ -131,7 +137,7 @@ export default function Polls() {
       justVoted: true,
     } satisfies Poll;
 
-    setPolls([...polls.filter((i) => i.id !== pollId), updatedPoll]);
+    setPolls([...polls.filter((i) => i.id === pollId), updatedPoll]);
 
     setTimeout(() => {
       setPolls((polls) =>
@@ -198,7 +204,7 @@ export default function Polls() {
 
   return (
     <div>
-      <h1 className="mb-4 text-4xl font-bold text-center">Ongoing Polls</h1>
+      <h1 className="mb-4 text-4xl font-bold text-center h1class">Ongoing Polls</h1>
       <div className="mb-4 flex items-center">
         <span className="mr-2 text-sm font-medium">Sort by:</span>
         <Select
@@ -272,14 +278,14 @@ function PollItem({
           <div className="w-100 relative mb-2 flex h-8 overflow-hidden border-2 border-amber-600">
 
             <div
-              className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+              className={`bg-[#FFB89A] transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}
             />
-            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white">
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary">
               Vote to see the real results!
             </p>
             <div
-              className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+              className={`bg-[#FFA97A] border-l-2 border-amber-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}
             />
           </div>
