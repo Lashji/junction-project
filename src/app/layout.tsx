@@ -33,7 +33,6 @@ export default async function RootLayout({
               region: "eu",
             }}
           >
-            {/* <p>navbar</p> */}
             <FingerprintProvider tempIdToken={tempIdToken}>
               <Navbar />
             </FingerprintProvider>
