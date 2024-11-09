@@ -25,9 +25,15 @@ export class Wallet {
         return;
       }
 
-      this.walletService.once(WalletEvents.INITIALIZED, resolve);
+      this.walletService.once(WalletEvents.INITIALIZED, () => {
+        resolve(true);
+      });
     });
   };
+
+  saveCredential(credential: W3CCredential) {
+    return this.walletService.getCredWallet().save(credential);
+  }
 
   async syncCredentials(creds: W3CCredential[]) {
     await this.walletService.getCredWallet().saveAll(creds);

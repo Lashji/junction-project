@@ -15,17 +15,6 @@ export const issuerRouter = createTRPCRouter({
     .input(z.object({ did: z.string(), credentialData: credentialDataSchema }))
     .query(async ({ input }) => {
       const issuerUrl = "https://b531e9f8450f.ngrok.app";
-      // {
-      //   "bigInt": "329285357405732062828432696261414574881",
-      //   "createdAt": "2024-11-09T18:26:39.148631Z",
-      //   "description": "test",
-      //   "hash": "215b710323a756247a18e0e7910dbaf7",
-      //   "id": "acb470a3-7bac-4bb8-9d6e-1088ebd5af9e",
-      //   "title": "jcktest",
-      //   "type": "test",
-      //   "url": "ipfs://QmRKRs2hsV9TRtRevW31DmoKrLssbv6iwwzxdcA7VDhpFU",
-      //   "version": "1.0"
-      // }
 
       const credentialSchema = {
         credentialSchema:
@@ -33,17 +22,19 @@ export const issuerRouter = createTRPCRouter({
         type: "test",
         credentialSubject: {
           id: input.did,
-          Name: input.credentialData.name,
           Age: input.credentialData.age,
           Gender: input.credentialData.gender,
           Nationality: input.credentialData.nationality,
+          name: input.credentialData.name,
         },
+        expiration: 1903357766,
       };
       const authString = Buffer.from(
         `${env.ISSUER_USERNAME}:${env.ISSUER_PASSWORD}`,
       ).toString("base64");
+
       const response = await fetch(
-        `${issuerUrl}/v2/identities/acb470a3-7bac-4bb8-9d6e-1088ebd5af9e/credentials`,
+        `${issuerUrl}/v2/identities/did:polygonid:polygon:amoy:2qXpxUxiJXdPBBP9jbjK6skPAkVywCbPmv5Ro6aPtp/credentials`,
         {
           headers: {
             Authorization: `Basic ${authString}`,
@@ -53,50 +44,33 @@ export const issuerRouter = createTRPCRouter({
           body: JSON.stringify(credentialSchema),
         },
       );
-      // EXAMPLE PAYLOAD
-      //     "credentialSchema": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json/KYCAgeCredential-v3.json",
-      // "type": "KYCAgeCredential",
-      // "credentialSubject": {
-      //   "id": "fill with did",
-      //   "birthday": 19960424,
-      //   "documentType": 2
-      // },
-      // "expiration": 1903357766
 
-      // if (!response.ok) {
-      //   console.log();
+      if (!response.ok) {
+        console.log();
 
-      // return new TRPCError({
-      //   code: "BAD_REQUEST",
-      //   message: "Failed to issue credential",
-      // });
-      // }
+        return new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Failed to issue credential",
+        });
+      }
 
-      // const data = (await response.json()) as unknown;
-      console.log("response", response);
+      const data = (await response.json()) as unknown as { id: string };
+      console.log("response", data);
 
-      return {
-        // greeting: `Hello ${input.text}`,
-        data: response,
-      };
+      const credentialResponse = await fetch(
+        `${issuerUrl}/v2/identities/did:polygonid:polygon:amoy:2qXpxUxiJXdPBBP9jbjK6skPAkVywCbPmv5Ro6aPtp/credentials/${data.id}`,
+        {
+          headers: {
+            "Content-type": "application/json",
+            Authorization: `Basic ${authString}`,
+          },
+        },
+      );
+
+      const credentialData = (await credentialResponse.json()) as unknown;
+
+      console.log("credentialData", credentialData);
+
+      return credentialData;
     }),
-  //   create: protectedProcedure
-  //     .input(z.object({ name: z.string().min(1) }))
-  //     .mutation(async ({ ctx, input }) => {
-  //       await ctx.db.insert(posts).values({
-  //         name: input.name,
-  //         createdById: ctx.session.user.id,
-  //       });
-  //     }),
-  //   getLatest: protectedProcedure.query(async ({ ctx }) => {
-  //     const post = await ctx.db.query.posts.findFirst({
-  //       orderBy: (posts, { desc }) => [desc(posts.createdAt)],
-  //     });
-
-  //     return post ?? null;
-  //   }),
-
-  //   getSecretMessage: protectedProcedure.query(() => {
-  //     return "you can now see this secret message!";
-  //   }),
 });

@@ -24,7 +24,7 @@ export type TokenData = {
 export const credentialDataSchema = z.object({
   name: z.string(),
   gender: z.string(),
-  age: z.number(),
+  age: z.string(),
   nationality: z.string(),
 });
 
@@ -64,4 +64,12 @@ export type Vote = {
   upvotes: number;
   downvotes: number;
   score: number;
+};
+
+export type IssuedCredential = {
+  id: string;
+  proofTypes: string[];
+  revoked: boolean;
+  schemaHash: string;
+  vc: Credential;
 };
