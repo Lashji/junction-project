@@ -11,10 +11,14 @@ interface AuthState {
   isAuthenticated: boolean;
   nationality: string;
   initialized: boolean;
+  authType: "did" | "fingerprint" | null;
+  fingerprintToken?: string;
+  visitorId?: string;
 }
 
 interface AuthActions {
-  initialize: (tempIdToken: string) => Promise<void>;
+  initialize: (tokenData?: TokenData) => Promise<void>;
+  initializeWithFingerprint: (authToken: string, visitorId: string) => void;
   logout: () => void;
   setNationality: (nationality: string) => void;
   setInitialized: (initialized: boolean) => void;
@@ -35,22 +39,31 @@ export const useStore = create<StoreState>((set, get) => ({
   isAuthenticated: false,
   nationality: "",
   initialized: false,
+  authType: null,
+  fingerprintToken: undefined,
+  visitorId: undefined,
   // Actions
   actions: {
-    initialize: async (tempIdToken: string) => {
+    initialize: async (token?: TokenData) => {
       set({ isLoading: true });
       try {
-        const tokenData = JSON.parse(tempIdToken) as TokenData;
-        const wallet = new Wallet(tokenData);
+        const wallet = new Wallet(token);
+        await wallet.isReady();
+        console.log("wallet is ready");
+
         const did = wallet.getActiveIdentityDID();
         console.log("Initializing wallet", did);
 
-        set({
+        const payload = {
           wallet,
           did,
           isAuthenticated: true,
           isLoading: false,
-        });
+        };
+
+        console.log("settings payload");
+
+        return set({ ...get(), ...payload });
       } catch (err) {
         set({
           error:
@@ -59,6 +72,7 @@ export const useStore = create<StoreState>((set, get) => ({
               : new Error("Failed to initialize wallet"),
           isLoading: false,
         });
+        throw new Error(`Failed to initialize wallet: ${err as string}`);
       }
     },
 
@@ -71,9 +85,22 @@ export const useStore = create<StoreState>((set, get) => ({
         did: undefined,
         isAuthenticated: false,
         nationality: "",
+        authType: null,
+        fingerprintToken: undefined,
+        visitorId: undefined,
       });
     },
 
     setNationality: (nationality: string) => set({ nationality }),
+
+    initializeWithFingerprint: (authToken: string, visitorId: string) => {
+      set({
+        isAuthenticated: true,
+        authType: "fingerprint",
+        fingerprintToken: authToken,
+        visitorId,
+        isLoading: false,
+      });
+    },
   },
 }));

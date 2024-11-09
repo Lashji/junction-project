@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect } from "react";
 import { useStore } from "~/store";
 import { ActiveIdentityManager } from "~/lib/wallet/local-storage-service";
+import { useFingerprint } from "./fingerprint-context";
 
 const AuthContext = createContext<{ initialized: boolean }>({
   initialized: false,
@@ -10,27 +11,39 @@ const AuthContext = createContext<{ initialized: boolean }>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { isLoading, actions } = useStore();
+  const { authToken, visitorId } = useFingerprint();
 
   useEffect(() => {
     const initializeAuth = async () => {
       const accountManager = new ActiveIdentityManager();
       const activeIdentity = accountManager.getActiveIdentity();
-      console.log("Authbound provider", accountManager, activeIdentity);
+      console.log("initialize auth called", activeIdentity);
 
       if (activeIdentity?.did) {
         try {
-          await actions.initialize(activeIdentity.did);
+          console.log("initializing with did", activeIdentity.did);
+
+          await actions.initialize();
+          console.log("initialization completed");
         } catch (error) {
-          console.error("Failed to initialize auth:", error);
+          console.error("Failed to initialize DID auth:", error);
+          // Fallback to fingerprint auth if DID fails
+          if (authToken && visitorId) {
+            actions.initializeWithFingerprint(authToken, visitorId);
+          }
         }
-      } else {
-        // Set initialized state even when there's no active identity
-        actions.setInitialized(true);
+      } else if (authToken && visitorId) {
+        console.log("auth token and visitor id found");
+
+        // Use fingerprint auth if no DID exists
+        actions.initializeWithFingerprint(authToken, visitorId);
       }
+
+      actions.setInitialized(true);
     };
 
     void initializeAuth();
-  }, []); // Empty dependency array since we only want this to run once
+  }, [actions, authToken, visitorId]);
 
   return (
     <AuthContext.Provider value={{ initialized: !isLoading }}>

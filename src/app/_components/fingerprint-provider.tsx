@@ -7,6 +7,7 @@ import {
   FingerprintContext,
   type FingerprintContextType,
 } from "../_context/fingerprint-context";
+import { env } from "~/env";
 
 interface FingerprintProviderProps {
   children: React.ReactNode;
@@ -35,28 +36,27 @@ export default function FingerprintProvider({
 
   useEffect(() => {
     const fetchUserId = async () => {
-      if (!visitorData?.visitorId) return;
+      if (!visitorData?.requestId) return;
 
       try {
-        const response = await fetch("/api/user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            visitorId: visitorData.visitorId,
-            tempIdToken,
-          }),
-        });
+        console.log("Fetching user ID", visitorData.requestId);
 
-        // if (!response.ok) {
-        //   throw new Error("Failed to fetch user ID");
-        // }
+        const response = await fetch(
+          `${env.NEXT_PUBLIC_BACKEND_URL}/auth/getUserIdWeak?requestId=${visitorData.requestId}`,
+        );
 
-        // const data = (await response.json()) as { userId: string };
-        setUserId("123");
+        if (!response.ok) {
+          console.log("Failed to fetch user ID", response);
+          // throw new Error("Failed to fetch user ID");
+          setUserId(null);
+          return;
+        }
+
+        const data = (await response.json()) as { userId: string };
+        setUserId(data.userId ?? 0);
       } catch (error) {
         console.error("Error fetching user ID:", error);
+        setUserId(null);
       } finally {
         setIsUserIdLoading(false);
       }
@@ -65,7 +65,7 @@ export default function FingerprintProvider({
     if (visitorData?.visitorId) {
       void fetchUserId();
     }
-  }, [visitorData?.visitorId, tempIdToken]);
+  }, [visitorData?.visitorId, tempIdToken, visitorData?.requestId]);
 
   if (initialize) {
     return <div>Initializing...</div>;
@@ -79,9 +79,9 @@ export default function FingerprintProvider({
     return <div>Error: {visitorError.message}</div>;
   }
 
-  //   if (!visitorData?.visitorId || !userId) {
-  //     return <div>Authentication failed</div>;
-  //   }
+  // if (!visitorData?.visitorId || !userId) {
+  //   return <div>Authentication failed. You need to disable AdBlock.</div>;
+  // }
 
   const contextValue: FingerprintContextType = {
     authToken: userId ?? undefined,
