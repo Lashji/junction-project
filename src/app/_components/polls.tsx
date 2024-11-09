@@ -20,24 +20,7 @@ import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import Visitor from "./visitor";
-
-type Comment = {
-  id: string;
-  text: string;
-  likes: number;
-  userLiked: boolean;
-};
-
-type Poll = {
-  id: number;
-  question: string;
-  options: [string, string];
-  votes: [number, number];
-  comments: [Comment[], Comment[]];
-  createdAt: Date;
-  userVoted: boolean;
-  justVoted: boolean;
-};
+import { Comment, Poll } from "~/types";
 
 const initialPolls: Poll[] = [
   {
@@ -278,7 +261,10 @@ function PollItem({
         <>
           <p className="mb-2 text-sm text-gray-500">Vote to see the results.</p>
 
-          <div className="mb-2 flex h-8 overflow-hidden rounded-full relative">
+          <div className="w-100 relative mb-2 flex h-8 overflow-hidden rounded-full">
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              add
+            </p>
             <div
               className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
               style={{ width: `50%` }}
@@ -290,8 +276,6 @@ function PollItem({
             />
           </div>
         </>
-
-
       )}
       {poll.userVoted ? (
         <>
