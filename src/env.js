@@ -23,6 +23,8 @@ export const env = createEnv({
     SIGNICAT_PRIVATE_SIGNING_KEY: z.string(),
     SIGNICAT_DOMAIN: z.string(),
     SIGNICAT_ISSUER: z.string(),
+    ISSUER_USERNAME: z.string(),
+    ISSUER_PASSWORD: z.string(),
   },
 
   /**
@@ -64,6 +66,8 @@ export const env = createEnv({
     SIGNICAT_ISSUER: process.env.SIGNICAT_ISSUER,
     NEXT_PUBLIC_ISSUER_URL: process.env.NEXT_PUBLIC_ISSUER_URL,
     NEXT_PUBLIC_VERIFIER_URL: process.env.NEXT_PUBLIC_VERIFIER_URL,
+    ISSUER_USERNAME: process.env.ISSUER_USERNAME,
+    ISSUER_PASSWORD: process.env.ISSUER_PASSWORD,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
