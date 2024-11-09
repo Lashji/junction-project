@@ -16,6 +16,7 @@ import { env } from "~/env";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useStore } from "~/store";
 import { useAuth } from "../_context/auth-context";
+import "~/styles/CustomUnderline.css"
 
 const fetchUnAnsweredPolls = async (userId: string) => {
   console.log("fetching polls", userId);
@@ -228,7 +229,7 @@ export default function Polls() {
 
   return (
     <div>
-      <h1 className="content-2xl mb-4 font-bold">Poll App</h1>
+      <h1 className="content-2xl mb-4 font-bold h1class text-4xl text-center">Ongoing Polls</h1>
       <div className="mb-4 flex items-center">
         <span className="content-sm mr-2 font-medium">Sort by:</span>
         <Select

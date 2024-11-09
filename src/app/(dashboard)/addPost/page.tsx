@@ -9,8 +9,6 @@ import { Checkbox } from "~/components/ui/checkbox"
 import { Label } from "~/components/ui/label"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
-import { Slider } from "~/components/ui/slider"
-import { Badge } from "~/components/ui/badge"
 import { Switch } from "~/components/ui/switch"
 
 export default function CreatePoll() {
@@ -22,7 +20,8 @@ export default function CreatePoll() {
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [showDemographics, setShowDemographics] = useState(false)
   const [gender, setGender] = useState<string>('')
-  const [ageRange, setAgeRange] = useState<[number, number]>([18, 65])
+  const [minAge, setMinAge] = useState(18)
+  const [maxAge, setMaxAge] = useState(65)
   const [useAgeRange, setUseAgeRange] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,17 +34,28 @@ export default function CreatePoll() {
       verifiedOnly,
       demographics: verifiedOnly && showDemographics ? { 
         gender, 
-        ageRange: useAgeRange ? ageRange : null 
+        ageRange: useAgeRange ? [minAge, maxAge] : null 
       } : null
     })
     router.push('/')
+  }
+
+  const handleAgeChange = (type: 'min' | 'max', value: string) => {
+    const numValue = parseInt(value, 10)
+    if (isNaN(numValue)) return
+
+    if (type === 'min') {
+      setMinAge(Math.min(Math.max(13, numValue), maxAge))
+    } else {
+      setMaxAge(Math.max(Math.min(100, numValue), minAge))
+    }
   }
 
   return (
     <div className="container mx-auto p-4">
       <Card className="max-w-4xl mx-auto text-foreground">
         <CardHeader>
-          <CardTitle className='text-3xl'>Create a New Poll</CardTitle>
+          <CardTitle className='text-4xl' >Create a New Poll</CardTitle>
           <CardDescription>Fill out the form below to create a new poll.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -145,19 +155,26 @@ export default function CreatePoll() {
                         />
                       </div>
                       {useAgeRange && (
-                        <>
-                          <Slider
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="number"
                             min={13}
-                            max={100}
-                            step={1}
-                            value={ageRange}
-                            onValueChange={(value) => setAgeRange(value as [number, number])}
+                            max={maxAge}
+                            value={minAge}
+                            onChange={(e) => handleAgeChange('min', e.target.value)}
+                            className="w-20"
                           />
-                          <div className="flex justify-between">
-                            <Badge variant="secondary">{ageRange[0]} years</Badge>
-                            <Badge variant="secondary">{ageRange[1]} years</Badge>
-                          </div>
-                        </>
+                          <span>to</span>
+                          <Input
+                            type="number"
+                            min={minAge}
+                            max={100}
+                            value={maxAge}
+                            onChange={(e) => handleAgeChange('max', e.target.value)}
+                            className="w-20"
+                          />
+                          <span>years old</span>
+                        </div>
                       )}
                     </div>
                   </div>
