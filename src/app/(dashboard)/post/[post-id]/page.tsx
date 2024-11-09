@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
+import Navbar from "~/app/_components/navbar";
 
 type Comment = {
   id: string;
@@ -219,101 +220,106 @@ export default function PollDetail() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <Link
-        href="/"
-        className="mb-4 inline-block text-blue-500 hover:underline"
-      >
-        &larr; Back to Polls
-      </Link>
-      <h1 className="mb-4 text-2xl font-bold">{poll.question}</h1>
+    <>
+      <Navbar />
+      <div className="container mx-auto p-4">
+        <Link
+          href="/"
+          className="mb-4 inline-block text-blue-500 hover:underline"
+        >
+          &larr; Back to Polls
+        </Link>
+        <h1 className="mb-4 text-2xl font-bold">{poll.question}</h1>
 
-      <div className="mb-6">
-        <div className="mb-2 h-8 overflow-hidden rounded-full bg-gray-200">
-          <div
-            className="h-full bg-blue-500 transition-all duration-500 ease-out"
-            style={{
-              width: poll.userVoted !== null ? `${percentages[0]}%` : "50%",
-            }}
-          />
-        </div>
-        <div className="mb-2 flex justify-between">
-          {poll.options.map((option, index) => (
-            <div key={option} className="text-center">
-              <Button
-                onClick={() => handleVote(index as 0 | 1)}
-                disabled={poll.userVoted !== null}
-                variant={poll.userVoted === index ? "default" : "outline"}
-              >
-                {option}
-              </Button>
-              {poll.userVoted !== null && (
-                <div className="mt-2">
-                  <div className="font-bold">{percentages[index]}%</div>
-                  <div className="text-sm text-gray-500">
-                    {poll.votes[index]} votes
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-      {showRandomComment && randomComment && (
-        <div className="mb-6 rounded-lg bg-gray-100 p-4">
-          <h3 className="mb-2 font-semibold">What do you think of this?</h3>
-          <p className="mb-2">{randomComment.text}</p>
-          <div className="flex gap-2">
-            <Input
-              value={replyToRandom}
-              onChange={(e) => setReplyToRandom(e.target.value)}
-              placeholder="Your reply..."
+        <div className="mb-6">
+          <div className="mb-2 h-8 overflow-hidden rounded-full bg-gray-200">
+            <div
+              className="h-full bg-blue-500 transition-all duration-500 ease-out"
+              style={{
+                width: poll.userVoted !== null ? `${percentages[0]}%` : "50%",
+              }}
             />
-            <Button onClick={handleReplyToRandom}>Reply</Button>
-            <Button variant="outline" onClick={handleSkipRandom}>
-              Skip
-            </Button>
+          </div>
+          <div className="mb-2 flex justify-between">
+            {poll.options.map((option, index) => (
+              <div key={option} className="text-center">
+                <Button
+                  onClick={() => handleVote(index as 0 | 1)}
+                  disabled={poll.userVoted !== null}
+                  variant={poll.userVoted === index ? "default" : "outline"}
+                >
+                  {option}
+                </Button>
+                {poll.userVoted !== null && (
+                  <div className="mt-2">
+                    <div className="font-bold">{percentages[index]}%</div>
+                    <div className="text-sm text-gray-500">
+                      {poll.votes[index]} votes
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-      )}
-      <div className="mb-6">
-        <h2 className="mb-2 text-xl font-semibold">Comments</h2>
-        <div className="mb-4 flex gap-2">
-          <Input
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
-          />
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                onClick={poll.userVoted !== null ? handleAddComment : undefined}
-              >
-                Post
+        {showRandomComment && randomComment && (
+          <div className="mb-6 rounded-lg bg-gray-100 p-4">
+            <h3 className="mb-2 font-semibold">What do you think of this?</h3>
+            <p className="mb-2">{randomComment.text}</p>
+            <div className="flex gap-2">
+              <Input
+                value={replyToRandom}
+                onChange={(e) => setReplyToRandom(e.target.value)}
+                placeholder="Your reply..."
+              />
+              <Button onClick={handleReplyToRandom}>Reply</Button>
+              <Button variant="outline" onClick={handleSkipRandom}>
+                Skip
               </Button>
-            </PopoverTrigger>
-            {poll.userVoted === null && (
-              <PopoverContent className="w-auto">
-                <p>Before commenting, please vote</p>
-              </PopoverContent>
-            )}
-          </Popover>
-        </div>
-        <div className="space-y-4">
-          {poll.comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              onLike={handleLikeComment}
-              onReply={handleReply}
-              pollOptions={poll.options}
-              isRandom={comment.id === randomComment?.id}
-              randomCommentRef={randomCommentRef}
+            </div>
+          </div>
+        )}
+        <div className="mb-6">
+          <h2 className="mb-2 text-xl font-semibold">Comments</h2>
+          <div className="mb-4 flex gap-2">
+            <Input
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
             />
-          ))}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  onClick={
+                    poll.userVoted !== null ? handleAddComment : undefined
+                  }
+                >
+                  Post
+                </Button>
+              </PopoverTrigger>
+              {poll.userVoted === null && (
+                <PopoverContent className="w-auto">
+                  <p>Before commenting, please vote</p>
+                </PopoverContent>
+              )}
+            </Popover>
+          </div>
+          <div className="space-y-4">
+            {poll.comments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                onLike={handleLikeComment}
+                onReply={handleReply}
+                pollOptions={poll.options}
+                isRandom={comment.id === randomComment?.id}
+                randomCommentRef={randomCommentRef}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
