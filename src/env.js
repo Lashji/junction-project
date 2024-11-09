@@ -36,6 +36,8 @@ export const env = createEnv({
     NEXT_PUBLIC_BACKEND_URL: z.string().url(),
     NEXT_PUBLIC_FINGERPRINTJS_TOKEN: z.string(),
     NEXT_PUBLIC_POLYGON_ID_RPC_URL: z.string().url(),
+    NEXT_PUBLIC_ISSUER_URL: z.string().url(),
+    NEXT_PUBLIC_VERIFIER_URL: z.string().url(),
   },
 
   /**
@@ -60,6 +62,8 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_FINGERPRINTJS_TOKEN,
     NEXT_PUBLIC_POLYGON_ID_RPC_URL: process.env.NEXT_PUBLIC_POLYGON_ID_RPC_URL,
     SIGNICAT_ISSUER: process.env.SIGNICAT_ISSUER,
+    NEXT_PUBLIC_ISSUER_URL: process.env.NEXT_PUBLIC_ISSUER_URL,
+    NEXT_PUBLIC_VERIFIER_URL: process.env.NEXT_PUBLIC_VERIFIER_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

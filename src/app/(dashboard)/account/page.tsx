@@ -5,9 +5,11 @@ export default async function AccountPage() {
   const cookieStore = await cookies();
   const tempIdToken = cookieStore.get("temp_id_token")?.value;
 
-  if (!tempIdToken) {
-    return <div>No verification token found</div>;
-  }
-
-  return <AccountLoader tempIdToken={tempIdToken} />;
+  return !tempIdToken ? (
+    <div className="text-center text-muted-foreground">
+      No verification token found
+    </div>
+  ) : (
+    <AccountLoader tempIdToken={tempIdToken} />
+  );
 }
