@@ -275,7 +275,23 @@ function PollItem({
     >
       <h2 className="mb-2 text-lg font-semibold">{poll.question}</h2>
       {!poll.userVoted && (
-        <p className="mb-2 text-sm text-gray-500">Vote to see the results.</p>
+        <>
+          <p className="mb-2 text-sm text-gray-500">Vote to see the results.</p>
+
+          <div className="mb-2 flex h-8 overflow-hidden rounded-full relative">
+            <div
+              className={`bg-blue-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+              style={{ width: `50%` }}
+            />
+            <p className="absolute justify-center flex-1 inset-0">add</p>
+            <div
+              className={`bg-red-500 transition-all duration-500 ease-out ${poll.justVoted ? "animate-pulse" : ""}`}
+              style={{ width: `50%` }}
+            />
+          </div>
+        </>
+
+
       )}
       {poll.userVoted ? (
         <>

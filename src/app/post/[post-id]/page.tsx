@@ -1,20 +1,12 @@
 "use client";
-import { useRouter } from "next/navigation";
-
-export default function Post() {
-  return <div></div>;
-}
-
-/** 
- * 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "~/components/ui/button"
+import { Input } from "~/components/ui/input"
 import { ThumbsUp, MessageSquare, Send } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 
 type Comment = {
   id: string
@@ -84,7 +76,7 @@ export default function PollDetail() {
   const handleVote = (optionIndex: 0 | 1) => {
     setPoll(prevPoll => {
       const newVotes = [...prevPoll.votes]
-      newVotes[optionIndex]++
+      newVotes[optionIndex]!++
       return { ...prevPoll, votes: newVotes as [number, number], userVoted: optionIndex }
     })
     setShowRandomComment(true)
@@ -95,7 +87,7 @@ export default function PollDetail() {
     const oppositeComments = poll.comments.filter(comment => comment.userVote !== votedOption)
     if (oppositeComments.length > 0) {
       const randomIndex = Math.floor(Math.random() * oppositeComments.length)
-      setRandomComment(oppositeComments[randomIndex])
+      setRandomComment(oppositeComments[randomIndex]!)
     } else {
       setRandomComment(null)
     }
@@ -205,6 +197,7 @@ export default function PollDetail() {
     <div className="container mx-auto p-4">
       <Link href="/" className="text-blue-500 hover:underline mb-4 inline-block">&larr; Back to Polls</Link>
       <h1 className="text-2xl font-bold mb-4">{poll.question}</h1>
+      
       <div className="mb-6">
         <div className="h-8 bg-gray-200 rounded-full overflow-hidden mb-2">
           <div 
@@ -356,4 +349,3 @@ function CommentItem({ comment, onLike, onReply, pollOptions, isRandom, randomCo
     </div>
   )
 }
-*/
