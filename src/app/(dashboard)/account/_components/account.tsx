@@ -1,6 +1,6 @@
 "use client";
 
-import { useStore } from "~/store";
+import { useAuth } from "~/app/_context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
@@ -8,9 +8,9 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 
 export default function Account() {
-  const { initialized, getIdentityDID, nationality, wallet } = useStore();
+  const { isAuthenticated, wallet, did, nationality } = useAuth();
 
-  if (!initialized) {
+  if (!isAuthenticated) {
     return (
       <div className="space-y-6">
         <div>
@@ -79,7 +79,7 @@ export default function Account() {
                 </label>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="break-all text-sm">
-                    {getIdentityDID() ?? "Not specified"}
+                    {did ?? "Not specified"}
                   </div>
                   <Button variant="outline" size="sm">
                     Copy

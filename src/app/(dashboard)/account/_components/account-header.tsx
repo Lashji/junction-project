@@ -11,15 +11,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import Link from "next/link";
+import { useAuth } from "~/app/_context/auth-context";
 
 export function AccountHeader() {
-  const { nationality } = useStore();
+  const { nationality, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background">
       <div className="flex h-16 items-center px-4">
         <div className="flex-1">
-          <h1 className="text-lg font-semibold">Account Dashboard</h1>
+          <Link href="/">
+            <h1 className="text-lg font-semibold">Home</h1>
+          </Link>
         </div>
         <div className="flex items-center space-x-4">
           <DropdownMenu>
@@ -42,7 +46,7 @@ export function AccountHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

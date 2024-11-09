@@ -1,47 +1,74 @@
-import { parse } from "path";
 import { create } from "zustand";
 import { Wallet } from "~/lib/wallet";
 import { type TokenData } from "~/types";
+import { ActiveIdentityManager } from "~/lib/wallet/local-storage-service";
 
-interface StoreState {
-  nationality: string;
-  setNationality: (nationality: string) => void;
-  initializeVerifiedAccount: (tempIdToken: string) => void;
-  initialized: boolean;
-  setInitialized: (initialized: boolean) => void;
+interface AuthState {
   wallet: Wallet | null;
-  setWallet: (wallet: Wallet) => void;
-  getIdentityDID: () => string | undefined;
+  did: string | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  isAuthenticated: boolean;
+  nationality: string;
 }
 
+interface AuthActions {
+  initialize: (tempIdToken: string) => Promise<void>;
+  logout: () => void;
+  setNationality: (nationality: string) => void;
+}
+
+interface StoreState extends AuthState {
+  actions: AuthActions;
+}
+
+const accountManager = new ActiveIdentityManager();
+
 export const useStore = create<StoreState>((set, get) => ({
-  nationality: "",
-  setNationality: (nationality) => set({ nationality }),
-  initializeVerifiedAccount: (tempIdToken: string) => {
-    console.log("Initializing verified account", tempIdToken);
-
-    try {
-      const tokenData = JSON.parse(tempIdToken) as unknown as TokenData;
-      // set({ nationality: parsedToken.birthdate });
-      const wallet = new Wallet(tokenData);
-      set({ wallet });
-      console.log("Wallet initialized", wallet);
-    } catch (error) {
-      console.error("Failed to parse tempIdToken:", error);
-      set({ nationality: "" });
-    }
-  },
-  initialized: false,
-  setInitialized: (initialized) => set({ initialized }),
+  // Auth State
   wallet: null,
-  setWallet: (wallet) => set({ wallet }),
-  getIdentityDID: () => {
-    const wallet = get().wallet;
+  did: undefined,
+  isLoading: true,
+  error: null,
+  isAuthenticated: false,
+  nationality: "",
 
-    if (!wallet) {
-      return;
-    }
+  // Actions
+  actions: {
+    initialize: async (tempIdToken: string) => {
+      set({ isLoading: true });
+      try {
+        const tokenData = JSON.parse(tempIdToken) as TokenData;
+        const wallet = new Wallet(tokenData);
+        const did = wallet.getActiveIdentityDID();
 
-    return wallet.getActiveIdentityDID();
+        set({
+          wallet,
+          did,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } catch (err) {
+        set({
+          error:
+            err instanceof Error
+              ? err
+              : new Error("Failed to initialize wallet"),
+          isLoading: false,
+        });
+      }
+    },
+
+    logout: () => {
+      localStorage.clear();
+      set({
+        wallet: null,
+        did: undefined,
+        isAuthenticated: false,
+        nationality: "",
+      });
+    },
+
+    setNationality: (nationality: string) => set({ nationality }),
   },
 }));

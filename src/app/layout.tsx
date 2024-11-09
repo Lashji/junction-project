@@ -11,6 +11,7 @@ import { env } from "~/env";
 
 import FingerprintProvider from "./_components/fingerprint-provider";
 import Navbar from "./_components/navbar";
+import { AuthProvider } from "./_context/auth-context";
 
 export const metadata: Metadata = {
   title: "Quorum",
@@ -34,7 +35,7 @@ export default async function RootLayout({
             }}
           >
             <FingerprintProvider tempIdToken={tempIdToken}>
-              {children}
+              <AuthProvider>{children}</AuthProvider>
             </FingerprintProvider>
           </FpjsProvider>
         </TRPCReactProvider>

@@ -1,20 +1,40 @@
 "use client";
 
-import { Button } from "~/components/ui/button";
-import { useFingerprint } from "../_context/fingerprint-context";
 import Link from "next/link";
+import { Button } from "~/components/ui/button";
+import { useAuth } from "../_context/auth-context";
 
 export default function NavbarClient() {
-  const { authToken } = useFingerprint();
+  const { isAuthenticated, logout } = useAuth();
 
   return (
-    <div className="flex w-full items-center justify-between px-4 py-3">
-      <Button variant="ghost">
-        <Link href="/">Quorum</Link>
-      </Button>
-      <Button variant="ghost">
-        <Link href="/login">Login</Link>
-      </Button>
-    </div>
+    <>
+      <div className="flex items-center gap-6">
+        <Link href="/" className="text-xl font-semibold">
+          Home
+        </Link>
+      </div>
+
+      <div className="flex items-center gap-4">
+        {isAuthenticated ? (
+          <>
+            <Link href="/account">
+              <Button variant="ghost">Account</Button>
+            </Link>
+            <Button
+              variant="ghost"
+              onClick={logout}
+              className="text-red-600 hover:bg-red-100 hover:text-red-600"
+            >
+              Logout
+            </Button>
+          </>
+        ) : (
+          <Link href="/login">
+            <Button>Sign In</Button>
+          </Link>
+        )}
+      </div>
+    </>
   );
 }

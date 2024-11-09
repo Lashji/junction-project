@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   FingerprintContext,
-  FingerprintContextType,
+  type FingerprintContextType,
 } from "../_context/fingerprint-context";
 
 interface FingerprintProviderProps {
