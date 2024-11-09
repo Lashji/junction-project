@@ -21,6 +21,8 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import Visitor from "./visitor";
 import { Comment, Poll } from "~/types";
+import "~/styles/CustomUnderline.css"
+
 
 const initialPolls: Poll[] = [
   {
@@ -196,14 +198,14 @@ export default function Polls() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Polls</h1>
+      <h1 className="mb-4 text-4xl font-bold text-center">Ongoing Polls</h1>
       <div className="mb-4 flex items-center">
         <span className="mr-2 text-sm font-medium">Sort by:</span>
         <Select
           value={sortBy}
           onValueChange={(value) => setSortBy(value as "top" | "new")}
         >
-          <SelectTrigger className="w-[180px] bg-card">
+          <SelectTrigger className="w-[180px] bg-card-foreground w-30">
             <SelectValue placeholder="Select sorting" />
           </SelectTrigger>
           <SelectContent>
@@ -261,7 +263,7 @@ function PollItem({
 
   return (
     <div
-      className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg"
+      className="cursor-pointer rounded-lg bg-card-foreground p-4 shadow transition-all duration-300 hover:shadow-lg"
       onClick={onSelect}
     >
       <h2 className="mb-2 text-lg font-semibold">{poll.question}</h2>
