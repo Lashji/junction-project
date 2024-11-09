@@ -32,11 +32,11 @@ export default function SetupClient({ tempIdToken }: Props) {
 
   const { data, error } = api.issuer.issueCredential.useQuery(
     {
-      did: did ?? "",
+      did: did!,
       credentialData: {
-        name: "John Doe",
+        name: "Lassi",
         gender: "Male",
-        birthDate: "1990-01-01",
+        age: 33,
         nationality: "FI",
       },
     },

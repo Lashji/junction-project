@@ -24,7 +24,7 @@ export type TokenData = {
 export const credentialDataSchema = z.object({
   name: z.string(),
   gender: z.string(),
-  birthDate: z.string(),
+  age: z.number(),
   nationality: z.string(),
 });
 
