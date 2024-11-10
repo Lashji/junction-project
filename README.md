@@ -1,26 +1,29 @@
 # Quorum - Digital Democracy Platform
 
 ## Overview
-Quorum is a modern digital democracy platform designed to enable secure, transparent, and authentic participation in online voting and discussions. Our platform combines robust identity verification with privacy-preserving technology to ensure genuine democratic engagement.
+Quorum is a hackathon project created for Junction 2024, designed to enable secure, transparent, and authentic participation in online voting and discussions. Our platform combines robust identity verification with privacy-preserving technology to ensure genuine democratic engagement while maintaining user privacy.
 
 ## Core Features
 
 ### 🔐 Secure Identity Verification
-- Bank-based verification for establishing unique digital identities
+- Bank-based strong authorization for establishing unique digital identities
 - Zero-knowledge proofs for privacy-preserving authentication
-- One-person-one-vote integrity through secure fingerprinting
+- One-person-one-vote integrity through combined approach:
+  - Browser fingerprinting for anonymous user identification
+  - W3C Verifiable Credentials for strong authentication
+  - Decentralized Identifiers (DIDs) for identity management
 
 ### 🗳️ Democratic Participation
 - Create and participate in community polls
 - Engage in meaningful discussions
-- Real-time voting results and analytics
-- Demographic-based insights (optional)
+- Demographic-based voting with privacy-preserving ZK proofs
+  - Filter participation based on verified attributes
+  - Maintain complete privacy of user data
 
 ### 🛡️ Privacy & Security
-- Advanced cryptographic methods for data protection
 - Personal information remains encrypted on user devices
 - Anonymous voting while maintaining authenticity
-- Bot-free environment through verified human participation
+- Bot-free environment through multi-layer verification
 
 ## Technical Stack
 
@@ -30,26 +33,29 @@ Quorum is a modern digital democracy platform designed to enable secure, transpa
 - TailwindCSS with ShadcnUI components
 - Framer Motion for animations
 
-### Authentication & Identity
+### Identity & Verification
+- [PolygonID Verifier Backend](https://github.com/0xPolygonID/verifier-backend) for credential verification
+- [PolygonID Issuer Node](https://github.com/0xPolygonID/issuer-node) for credential issuance
 - FingerprintJS Pro for device fingerprinting
 - Polygon ID integration for identity verification
-- Bank ID verification system
+- Signicat Bank ID verification using FTN (Finnish Trust Network) 
 
 ### Backend Services
-- TRPC for type-safe API calls
-- Drizzle ORM for database management
-- NextAuth for authentication flow
+- FastAPI Python backend for core functionality
+- PostgreSQL for data persistence
+- Redis for caching
+- Custom authentication system
 
-## Getting Started
+## Live Demo
 
-1. **Authentication**: Secure your identity through our bank verification process
-2. **Digital Identity**: Your proof of identity remains on your device
-3. **Participation**: Join discussions and votes with complete privacy
+Experience Quorum in action at [junction-project-dbun.vercel.app](https://junction-project-dbun.vercel.app/)
 
-## Privacy Commitment
-Your privacy is our priority. We implement:
-- Zero-knowledge technology for identity proofs
-- Encrypted personal data storage
-- No sharing of personal information without explicit consent
+Key features you can try:
+- Secure bank-based identity verification
+- Zero-knowledge credential issuance
+- Privacy-preserving participation in polls
+- Anonymous but verified discussions
 
-## Development
+Note: Bank ID verification currently supports Finnish bank credentials through the FTN network.
+
+Another note: Issuer and verifier might not work on the live demo as they are hosted/tunneled from local network currently and there might be downtimes.
