@@ -102,10 +102,11 @@ const fetchLastRepliedThreadForUser = async (
     `${env.NEXT_PUBLIC_BACKEND_URL}/getLeastRepliedThreadForUser?userId=${userId}&pollId=${pollId}`,
   );
 
-  const data = (await response.json()) as unknown as Comment;
+  const data = (await response.json()) as unknown as Comment[];
   console.log("last replied thread", data);
 
-  return data;
+  // Return the first comment from the array
+  return data[0] ?? null;
 };
 
 const fetchUserComments = async (userId: string) => {
@@ -407,48 +408,73 @@ export default function PollDetail() {
     answerPollMutation(selectedPollData?.options[optionIndex] ?? "");
   };
 
+  // Define a type for the mutation parameters
+  type CommentMutationParams = {
+    comment: string;
+    threadId?: string;
+    threadPosition?: number;
+  };
+
+  const { mutate: postCommentMutation } = useMutation({
+    mutationKey: ["postComment"],
+    mutationFn: ({
+      comment,
+      threadId,
+      threadPosition,
+    }: CommentMutationParams) => {
+      console.log("Submitting comment:", {
+        content: comment,
+        userId,
+        pollId: selectedPollData?.id,
+        threadId,
+        threadPosition,
+      });
+      return postComment(
+        comment,
+        userId!,
+        selectedPollData?.id ?? "",
+        threadId,
+        threadPosition,
+      );
+    },
+    onSuccess: (data) => {
+      console.log("Comment posted successfully:", data);
+      void queryClient.invalidateQueries({ queryKey: ["pollThreads"] });
+      void queryClient.invalidateQueries({ queryKey: ["poll"] });
+      setReplyToRandom("");
+      setShowRandomComment(false);
+      setShowVoteDialog(false);
+    },
+    onError: (error) => {
+      console.error("Error posting comment:", error);
+    },
+  });
+
   const handleVoteDialogSubmit = (isJoinDiscussion: boolean) => {
     if (isJoinDiscussion) {
-      // Select a random comment and show reply interface
-      const randomIndex = Math.floor(Math.random() * DEMO_COMMENTS.length);
-      const randomCommentToSet = DEMO_COMMENTS[randomIndex];
-      if (randomCommentToSet) {
-        setRandomComment(randomCommentToSet);
+      if (leastRepliedThread) {
+        console.log("Setting random comment:", leastRepliedThread);
+        setRandomComment(leastRepliedThread);
         setShowRandomComment(true);
+      } else {
+        console.log("No least replied thread found");
       }
     } else {
-      // Post regular comment
       if (voteDialogComment.trim()) {
-        postCommentMutation(voteDialogComment);
+        postCommentMutation({ comment: voteDialogComment });
         setVoteDialogComment("");
         setShowVoteDialog(false);
       }
     }
   };
 
-  const { mutate: postCommentMutation } = useMutation({
-    mutationKey: ["postComment"],
-    mutationFn: (comment: string) => {
-      return postComment(
-        comment,
-        userId!,
-        selectedPollData?.id ?? "",
-        undefined, // threadId is optional for new comments
-        0, // threadPosition 0 for new root comments
-      );
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["pollThreads"] });
-      void queryClient.invalidateQueries({ queryKey: ["poll"] });
-    },
-  });
-
   const handleReplyToRandom = () => {
     if (randomComment && replyToRandom.trim()) {
-      postCommentMutation(replyToRandom);
-      setReplyToRandom("");
-      setShowRandomComment(false);
-      setShowVoteDialog(false);
+      postCommentMutation({
+        comment: replyToRandom,
+        threadId: randomComment.threadId,
+        threadPosition: randomComment.threadPosition + 1,
+      });
     }
   };
 
@@ -458,7 +484,7 @@ export default function PollDetail() {
 
   const handleAddComment = () => {
     if (newComment.trim()) {
-      postCommentMutation(newComment);
+      postCommentMutation({ comment: newComment });
       setNewComment("");
     }
   };
@@ -489,7 +515,7 @@ export default function PollDetail() {
     )?.[0];
 
     if (threadId) {
-      postCommentMutation(replyText);
+      postCommentMutation({ comment: replyText, threadId });
     }
   };
 
@@ -554,6 +580,11 @@ export default function PollDetail() {
     queryFn: () => fetchUserComments(selectedPollData?.id ?? ""),
     enabled: !!selectedPollData?.id,
   });
+
+  // Add a useEffect to monitor the randomComment state
+  useEffect(() => {
+    console.log("Random comment updated:", randomComment);
+  }, [randomComment]);
 
   if (!selectedPollData) {
     return <div>Loading...</div>;
@@ -764,7 +795,6 @@ export default function PollDetail() {
               </div>
             </div>
           ) : (
-            // Random comment reply view
             <div className="grid gap-4 py-4">
               <div className="rounded-lg bg-amber-50 p-4">
                 <p className="mb-2 text-sm text-gray-600">Reply to:</p>
