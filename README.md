@@ -42,6 +42,7 @@ Quorum is a hackathon project created for Junction 2024, designed to enable secu
 
 ### Backend Services
 - FastAPI Python backend for core functionality
+- Backend repository https://github.com/ink-waffle/QuorumBackend
 - PostgreSQL for data persistence
 - Redis for caching
 - Custom authentication system
