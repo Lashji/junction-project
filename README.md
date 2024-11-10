@@ -1,29 +1,55 @@
-# Create T3 App
+# Quorum - Digital Democracy Platform
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+## Overview
+Quorum is a modern digital democracy platform designed to enable secure, transparent, and authentic participation in online voting and discussions. Our platform combines robust identity verification with privacy-preserving technology to ensure genuine democratic engagement.
 
-## What's next? How do I make an app with this?
+## Core Features
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+### 🔐 Secure Identity Verification
+- Bank-based verification for establishing unique digital identities
+- Zero-knowledge proofs for privacy-preserving authentication
+- One-person-one-vote integrity through secure fingerprinting
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+### 🗳️ Democratic Participation
+- Create and participate in community polls
+- Engage in meaningful discussions
+- Real-time voting results and analytics
+- Demographic-based insights (optional)
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+### 🛡️ Privacy & Security
+- Advanced cryptographic methods for data protection
+- Personal information remains encrypted on user devices
+- Anonymous voting while maintaining authenticity
+- Bot-free environment through verified human participation
 
-## Learn More
+## Technical Stack
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+### Frontend
+- Next.js 15.0
+- TypeScript
+- TailwindCSS with ShadcnUI components
+- Framer Motion for animations
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+### Authentication & Identity
+- FingerprintJS Pro for device fingerprinting
+- Polygon ID integration for identity verification
+- Bank ID verification system
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+### Backend Services
+- TRPC for type-safe API calls
+- Drizzle ORM for database management
+- NextAuth for authentication flow
 
-## How do I deploy this?
+## Getting Started
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+1. **Authentication**: Secure your identity through our bank verification process
+2. **Digital Identity**: Your proof of identity remains on your device
+3. **Participation**: Join discussions and votes with complete privacy
+
+## Privacy Commitment
+Your privacy is our priority. We implement:
+- Zero-knowledge technology for identity proofs
+- Encrypted personal data storage
+- No sharing of personal information without explicit consent
+
+## Development
