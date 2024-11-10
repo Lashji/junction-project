@@ -348,13 +348,13 @@ export default function PollDetail() {
   const queryClient = useQueryClient();
 
   const { data: selectedPollData } = useQuery({
-    queryKey: ["poll"],
+    queryKey: ["poll", id],
     queryFn: () => (typeof id === "string" ? fetchPoll(id) : null),
     enabled: !!id,
   });
 
   const { data: leastRepliedThread } = useQuery({
-    queryKey: ["leastRepliedThread"],
+    queryKey: ["leastRepliedThread", id, userId],
     queryFn: () =>
       typeof id === "string"
         ? fetchLastRepliedThreadForUser(id, userId!)
@@ -370,7 +370,7 @@ export default function PollDetail() {
   });
 
   const { data: unansweredPolls } = useQuery({
-    queryKey: ["unansweredPolls"],
+    queryKey: ["unansweredPolls", userId],
     queryFn: () => fetchUnAnsweredPolls(userId!),
     enabled: !!userId,
   });
@@ -557,7 +557,7 @@ export default function PollDetail() {
 
   // Add this query for real comments
   const { data: realComments } = useQuery({
-    queryKey: ["comments", selectedPollData?.id],
+    queryKey: ["comments", id],
     queryFn: () => fetchUserComments(selectedPollData?.id ?? ""),
     enabled: !!selectedPollData?.id,
   });
@@ -644,24 +644,56 @@ export default function PollDetail() {
           <div className="space-y-4">
             {pollThreads &&
               Object.entries(pollThreads).map(([threadId, comments]) => {
-                // Sort comments by threadPosition first
-                const sortedComments = [...comments].sort(
-                  (a, b) => a.threadPosition - b.threadPosition,
+                // First find root comments (threadPosition === 0)
+                const rootComments = comments.filter(
+                  (c) => c.threadPosition === 0,
                 );
 
+                // Then find replies for each root comment
+                const commentWithReplies = rootComments.map((rootComment) => {
+                  const replies = comments
+                    .filter(
+                      (c) => c.threadPosition > 0 && c.threadId === threadId,
+                    )
+                    .sort((a, b) => a.threadPosition - b.threadPosition);
+
+                  return { rootComment, replies };
+                });
+
                 return (
-                  <div key={threadId}>
-                    {sortedComments.map((comment) => (
-                      <CommentItem
-                        key={comment.id}
-                        comment={comment}
-                        onLike={handleLikeComment}
-                        onReply={handleReply}
-                        pollOptions={selectedPollData?.options ?? ["Yes", "No"]}
-                        isRandom={comment.id === randomComment?.id}
-                        randomCommentRef={randomCommentRef}
-                        depth={comment.threadPosition}
-                      />
+                  <div key={threadId} className="space-y-4">
+                    {commentWithReplies.map(({ rootComment, replies }) => (
+                      <div key={rootComment.id}>
+                        <CommentItem
+                          comment={rootComment}
+                          onLike={handleLikeComment}
+                          onReply={handleReply}
+                          pollOptions={
+                            selectedPollData?.options ?? ["Yes", "No"]
+                          }
+                          isRandom={rootComment.id === randomComment?.id}
+                          randomCommentRef={randomCommentRef}
+                          depth={0}
+                        />
+                        {replies.length > 0 && (
+                          <div className="mt-4 space-y-4">
+                            {replies.map((reply) => (
+                              <CommentItem
+                                key={reply.id}
+                                comment={reply}
+                                onLike={handleLikeComment}
+                                onReply={handleReply}
+                                pollOptions={
+                                  selectedPollData?.options ?? ["Yes", "No"]
+                                }
+                                isRandom={reply.id === randomComment?.id}
+                                randomCommentRef={randomCommentRef}
+                                depth={reply.threadPosition}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 );
