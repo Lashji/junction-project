@@ -108,10 +108,6 @@ export default function SetupClient({ tempIdToken }: Props) {
     }
   }, [data]);
 
-  if (!isAuthenticated) {
-    return <div>Not authenticated</div>;
-  }
-
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-16 py-20">
       {error ? (

@@ -128,8 +128,6 @@ export default function LoginClient({ tempIdToken }: { tempIdToken?: string }) {
         </div>
       </div>
 
-      {/* Right side - Login */}
-
       {setup && tempIdToken ? (
         <SetupClient tempIdToken={tempIdToken} />
       ) : (
