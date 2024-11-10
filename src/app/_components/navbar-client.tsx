@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "../_context/auth-context";
+import { VerifiedIcon } from "lucide-react";
 
 export default function NavbarClient() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, userId } = useAuth();
 
   return (
     <>
@@ -19,7 +20,7 @@ export default function NavbarClient() {
         {isAuthenticated ? (
           <>
             <Link href="/account">
-              <Button variant="ghost">Account</Button>
+              <Button variant="ghost">Welcome, {userId ?? "Anonymous"}</Button>
             </Link>
             <Button
               variant="ghost"
@@ -28,6 +29,7 @@ export default function NavbarClient() {
             >
               Logout
             </Button>
+            <VerifiedIcon className="ml-2 h-4 w-4" />
           </>
         ) : (
           <Link href="/login">

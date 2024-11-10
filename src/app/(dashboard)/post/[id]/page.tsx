@@ -205,8 +205,14 @@ const THEME_COLORS = {
   },
 };
 
+// Update the Comment type to include replies
+type CommentWithReplies = Comment & {
+  likes?: number;
+  replies?: CommentWithReplies[];
+};
+
 // Add this near the top of the file
-const DEMO_COMMENTS: (Comment & { likes?: number })[] = [
+const DEMO_COMMENTS: CommentWithReplies[] = [
   {
     id: "1",
     content:
@@ -218,6 +224,34 @@ const DEMO_COMMENTS: (Comment & { likes?: number })[] = [
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     likes: 24,
+    replies: [
+      {
+        id: "1.1",
+        content:
+          "Could you share the specific data you're referring to? I'm interested in seeing the numbers behind this.",
+        pollAnswer: "No",
+        userId: "user6",
+        pollId: "1",
+        threadId: "thread1",
+        threadPosition: 1,
+        createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+        likes: 8,
+        replies: [
+          {
+            id: "1.1.1",
+            content:
+              "Here's a link to the recent study: https://www.tandfonline.com/doi/full/10.1080/13600869.2024.2398915. The key findings on page 47 are particularly relevant.",
+            pollAnswer: "Yes",
+            userId: "user1",
+            pollId: "1",
+            threadId: "thread1",
+            threadPosition: 2,
+            createdAt: new Date(Date.now() - 1000 * 60 * 85).toISOString(),
+            likes: 15,
+          },
+        ],
+      },
+    ],
   },
   {
     id: "2",
@@ -230,42 +264,112 @@ const DEMO_COMMENTS: (Comment & { likes?: number })[] = [
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     likes: 15,
+    replies: [
+      {
+        id: "2.1",
+        content:
+          "What specific risks are you most concerned about? I'm curious to understand the opposition better.",
+        pollAnswer: "Yes",
+        userId: "user7",
+        pollId: "1",
+        threadId: "thread2",
+        threadPosition: 1,
+        createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
+        likes: 6,
+      },
+    ],
   },
   {
     id: "3",
     content:
-      "Voted Yes because the benefits outweigh the costs. We need to think about the long-term implications.",
+      "The economic implications are significant. We've seen similar initiatives succeed in other regions.",
     pollAnswer: "Yes",
     userId: "user3",
     pollId: "1",
     threadId: "thread3",
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    likes: 8,
+    likes: 18,
+    replies: [
+      {
+        id: "3.1",
+        content:
+          "Those regions had different economic conditions though. We need to consider local factors.",
+        pollAnswer: "No",
+        userId: "user8",
+        pollId: "1",
+        threadId: "thread3",
+        threadPosition: 1,
+        createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
+        likes: 12,
+        replies: [
+          {
+            id: "3.1.1",
+            content:
+              "Actually, if you look at the demographic data, our region is quite similar to those success cases.",
+            pollAnswer: "Yes",
+            userId: "user3",
+            pollId: "1",
+            threadId: "thread3",
+            threadPosition: 2,
+            createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
+            likes: 9,
+          },
+        ],
+      },
+    ],
   },
   {
     id: "4",
     content:
-      "No way! Have you considered the economic impact? This could affect thousands of people negatively.",
-    pollAnswer: "No",
+      "The environmental impact alone makes this worth supporting. We need to think long-term.",
+    pollAnswer: "Yes",
     userId: "user4",
     pollId: "1",
     threadId: "thread4",
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    likes: 12,
+    likes: 22,
+    replies: [
+      {
+        id: "4.1",
+        content:
+          "The environmental benefits are overstated. There are hidden costs we're not discussing.",
+        pollAnswer: "No",
+        userId: "user9",
+        pollId: "1",
+        threadId: "thread4",
+        threadPosition: 1,
+        createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+        likes: 7,
+      },
+    ],
   },
   {
     id: "5",
     content:
-      "Yes voter here. The research backing this proposal is solid and peer-reviewed.",
+      "As someone who works in this field, I can confirm that the proposed approach aligns with industry best practices.",
     pollAnswer: "Yes",
     userId: "user5",
     pollId: "1",
     threadId: "thread5",
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    likes: 3,
+    likes: 31,
+    replies: [
+      {
+        id: "5.1",
+        content:
+          "Could you elaborate on these best practices? Would love to learn more.",
+        pollAnswer: "Yes",
+        userId: "user10",
+        pollId: "1",
+        threadId: "thread5",
+        threadPosition: 1,
+        createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
+        likes: 4,
+      },
+    ],
   },
 ];
 
@@ -576,15 +680,16 @@ interface CommentItemProps {
   depth?: number;
 }
 
+// Update CommentItem to handle nested replies
 function CommentItem({
   comment,
   onLike,
   onReply,
+  pollOptions,
   isRandom,
   randomCommentRef,
-  pollOptions,
   depth = 0,
-}: CommentItemProps & { comment: Comment & { likes?: number } }) {
+}: CommentItemProps & { comment: CommentWithReplies }) {
   const [replyText, setReplyText] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [localLikes, setLocalLikes] = useState(comment.likes ?? 0);
@@ -596,10 +701,12 @@ function CommentItem({
 
   return (
     <div
-      className={`${depth > 0 ? "ml-6 border-l-2 border-gray-100 pl-6" : ""}`}
+      className={`${depth > 0 ? "ml-6 border-l-2 border-amber-200 pl-6" : ""}`}
       ref={isRandom ? randomCommentRef : undefined}
     >
-      <div className="rounded-lg bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-md">
+      <div
+        className={`rounded-lg p-5 shadow-sm transition-shadow duration-300 hover:shadow-md ${depth === 0 ? "bg-white" : ""} ${depth === 1 ? "bg-amber-50" : ""} ${depth === 2 ? "bg-amber-100/30" : ""} `}
+      >
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
@@ -670,6 +777,22 @@ function CommentItem({
             >
               <Send className="h-4 w-4" />
             </Button>
+          </div>
+        )}
+
+        {/* Render nested replies */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="mt-4 space-y-4">
+            {comment.replies.map((reply) => (
+              <CommentItem
+                key={reply.id}
+                comment={reply}
+                onLike={onLike}
+                onReply={onReply}
+                pollOptions={pollOptions}
+                depth={depth + 1}
+              />
+            ))}
           </div>
         )}
       </div>
