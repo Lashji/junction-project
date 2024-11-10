@@ -95,11 +95,11 @@ const fetchUnAnsweredPolls = async (userId: string) => {
 };
 
 const fetchLastRepliedThreadForUser = async (
-  userId: string,
   pollId: string,
+  userId: string,
 ) => {
   const response = await fetch(
-    `${env.NEXT_PUBLIC_BACKEND_URL}/getLastRepliedThreadForUser?userId=${userId}&pollId=${pollId}`,
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getLeastRepliedThreadForUser?userId=${userId}&pollId=${pollId}`,
   );
 
   const data = (await response.json()) as unknown as Comment;
@@ -387,6 +387,7 @@ export default function PollDetail() {
       answerPoll(selectedPollData?.id ?? "", answer, userId!),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["poll"] });
+      setShowVoteDialog(true);
     },
   });
 
@@ -403,7 +404,6 @@ export default function PollDetail() {
 
   const handleVote = (optionIndex: 0 | 1) => {
     setSelectedVote(selectedPollData?.options[optionIndex] ?? "");
-    setShowVoteDialog(true);
     answerPollMutation(selectedPollData?.options[optionIndex] ?? "");
   };
 
@@ -429,21 +429,12 @@ export default function PollDetail() {
   const { mutate: postCommentMutation } = useMutation({
     mutationKey: ["postComment"],
     mutationFn: (comment: string) => {
-      // Find the parent comment's position if replying
-      const parentComment = Object.values(pollThreads ?? {})
-        .flat()
-        .find((c) => c.id === randomComment?.id);
-
-      const threadPosition = parentComment
-        ? parentComment.threadPosition + 1
-        : 0;
-
       return postComment(
         comment,
         userId!,
         selectedPollData?.id ?? "",
-        randomComment?.threadId ?? "",
-        threadPosition,
+        undefined, // threadId is optional for new comments
+        0, // threadPosition 0 for new root comments
       );
     },
     onSuccess: () => {
@@ -465,9 +456,11 @@ export default function PollDetail() {
     setShowRandomComment(false);
   };
 
-  const handleAddComment = async () => {
-    postCommentMutation(newComment);
-    setNewComment("");
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      postCommentMutation(newComment);
+      setNewComment("");
+    }
   };
 
   const handleLikeComment = (commentId: string) => {
@@ -625,6 +618,12 @@ export default function PollDetail() {
                     </div>
                   </div>
                 ))}
+                <Button
+                  onClick={() => setShowVoteDialog(true)}
+                  className="mt-4 bg-gray-200 text-gray-700 hover:bg-gray-300"
+                >
+                  Debug: Open Discussion Dialog
+                </Button>
               </div>
             )}
           </div>
