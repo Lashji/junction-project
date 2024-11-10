@@ -21,7 +21,13 @@ import {
 import Navbar from "~/app/_components/navbar";
 import { env } from "~/env";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Answer, type Comment, type Vote, type Poll } from "~/types";
+import {
+  type Answer,
+  type Comment,
+  type Vote,
+  type Poll,
+  Threads,
+} from "~/types";
 import { useAuth } from "~/app/_context/auth-context";
 import {
   Dialog,
@@ -40,6 +46,17 @@ const fetchPoll = async (pollId: string) => {
 
   const data = (await response.json()) as unknown as Poll;
   console.log("GET POLL ", data);
+
+  return data;
+};
+
+const fetchPollThreads = async (pollId: string) => {
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getPollThreads?pollId=${pollId}`,
+  );
+
+  const data = (await response.json()) as unknown as Threads;
+  console.log("poll threads", data);
 
   return data;
 };
@@ -421,6 +438,12 @@ export default function PollDetail() {
   });
   // console.log("leastRepliedThread", leastRepliedThread);
 
+  const { data: pollThreads } = useQuery({
+    queryKey: ["pollThreads", id],
+    queryFn: () => (typeof id === "string" ? fetchPollThreads(id) : null),
+    enabled: !!id,
+  });
+
   const { data: unansweredPolls } = useQuery({
     queryKey: ["unansweredPolls"],
     queryFn: () => fetchUnAnsweredPolls(userId!),
@@ -589,6 +612,13 @@ export default function PollDetail() {
     return [aPercentage, bPercentage];
   }, [selectedPollData, voteCounts]);
 
+  // Add this query for real comments
+  const { data: realComments } = useQuery({
+    queryKey: ["comments", selectedPollData?.id],
+    queryFn: () => fetchUserComments(selectedPollData?.id ?? ""),
+    enabled: !!selectedPollData?.id,
+  });
+
   if (!selectedPollData) {
     return <div>Loading...</div>;
   }
@@ -669,8 +699,7 @@ export default function PollDetail() {
 
           {/* Comments list */}
           <div className="space-y-4">
-            {/* Use DEMO_COMMENTS instead of selectedPollData.comments */}
-            {DEMO_COMMENTS.map((comment) => (
+            {[...(realComments ?? []), ...DEMO_COMMENTS].map((comment) => (
               <CommentItem
                 key={comment.id}
                 comment={comment}
