@@ -331,22 +331,22 @@ function PollItem({
     <div
       className="cursor-pointer rounded-lg bg-white p-4 shadow transition-all duration-300 hover:shadow-lg min-h-screen"
     >
-      <h2 className="content-lg mb-2 text-5xl font-semibold mt-6">
+      <h2 className="content-lg mb-10 text-5xl font-semibold mt-12">
         {poll.title}
       </h2>
 
-      <p className="mb-5 mt-6 text-2xl">{poll.description}</p>
+      <p className="mb-16 mt-12 text-2xl">{poll.description}</p>
 
       {hasVoted ? (
         <></>
       ) : (
         <>
-          <div className="w-100 relative mb-5 flex h-40 overflow-hidden border-2 border-amber-600 mb-16 mt-8">
+          <div className="w-100 relative mb-5 flex h-40 overflow-hidden border-2 border-amber-600 mb-23 mt-10 rounded-3xl">
             <div
               className={`bg-[#FFB89A] transition-all duration-500 ease-out`}
               style={{ width: `50%` }}
             />
-            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[17px] font-medium text-primary">
+            <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[17px] font-medium text-primary text-3xl">
               Vote to see the results!
             </p>
             <div
@@ -359,7 +359,7 @@ function PollItem({
             {poll.options.map((option) => (
               <>
                 <Button
-                  className="block h-96 w-[45vw]"
+                  className="block h-[30vw] w-[45vw] rounded-3xl mt-6"
                   key={option}
                   onClick={(e) => {
                     e.stopPropagation();
