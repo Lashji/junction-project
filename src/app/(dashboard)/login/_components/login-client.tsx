@@ -49,7 +49,9 @@ export default function SetupPage() {
     <div className="flex min-h-screen flex-col md:flex-row">
       <div className="flex flex-1 flex-col bg-foreground/95 px-16 py-20 text-primary-foreground">
         <div className="flex-1">
-          <LucideGlobe className="mb-16 h-16 w-16 text-background" />
+          <Link href="/">
+            <LucideGlobe className="mb-16 h-16 w-16 text-background" />
+          </Link>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
