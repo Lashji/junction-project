@@ -3,7 +3,14 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { ThumbsUp, MessageSquare, Send } from "lucide-react";
+import {
+  ThumbsUp,
+  MessageSquare,
+  Send,
+  Check,
+  X,
+  MessageCircle,
+} from "lucide-react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,6 +23,15 @@ import { env } from "~/env";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Answer, type Comment, type Vote, type Poll } from "~/types";
 import { useAuth } from "~/app/_context/auth-context";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Textarea } from "~/components/ui/textarea";
+import { motion, AnimatePresence } from "framer-motion";
 
 const fetchPoll = async (pollId: string) => {
   const response = await fetch(
@@ -195,11 +211,13 @@ function DiscussionInput({
 const THEME_COLORS = {
   optionA: {
     bg: "#FFB89A",
+    bgDark: "#FF9B73", // Darker shade for buttons
     border: "#FFB89A",
     text: "#7C2D12", // amber-900 for good contrast
   },
   optionB: {
     bg: "#FFA97A",
+    bgDark: "#FF8C53", // Darker shade for buttons
     border: "#FFA97A",
     text: "#7C2D12",
   },
@@ -431,27 +449,44 @@ export default function PollDetail() {
 
   // console.log("selectedPollData", selectedPollData);
 
+  const [showVoteDialog, setShowVoteDialog] = useState(false);
+  const [voteDialogComment, setVoteDialogComment] = useState("");
+  const [selectedVote, setSelectedVote] = useState<string | null>(null);
+
   const handleVote = (optionIndex: 0 | 1) => {
-    // selectRandomComment(optionIndex);
+    setSelectedVote(selectedPollData?.options[optionIndex] ?? "");
+    setShowVoteDialog(true);
     answerPollMutation(selectedPollData?.options[optionIndex] ?? "");
   };
 
-  const selectRandomComment = (votedOption: 0 | 1) => {
-    const oppositeComments = selectedPollData?.comments.filter(
-      (comment) => comment.pollAnswer !== votedOption.toString(),
-    );
-    if (oppositeComments && oppositeComments.length > 0) {
-      const randomIndex = Math.floor(Math.random() * oppositeComments.length);
-      setRandomComment(oppositeComments[randomIndex]!);
+  const handleVoteDialogSubmit = (isJoinDiscussion: boolean) => {
+    if (isJoinDiscussion) {
+      // Select a random comment and show reply interface
+      const randomIndex = Math.floor(Math.random() * DEMO_COMMENTS.length);
+      const randomCommentToSet = DEMO_COMMENTS[randomIndex];
+      if (randomCommentToSet) {
+        setRandomComment(randomCommentToSet);
+        setShowRandomComment(true);
+      }
     } else {
-      setRandomComment(null);
+      // Post regular comment
+      if (voteDialogComment.trim()) {
+        postCommentMutation(voteDialogComment);
+        setVoteDialogComment("");
+        setShowVoteDialog(false);
+      }
     }
   };
 
   const { mutate: postCommentMutation } = useMutation({
     mutationKey: ["postComment"],
     mutationFn: (comment: string) =>
-      postComment(comment, userId!, selectedPollData?.id ?? "", ""),
+      postComment(
+        comment,
+        userId!,
+        selectedPollData?.id ?? "",
+        randomComment?.threadId ?? "",
+      ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["poll"] });
       void queryClient.invalidateQueries({ queryKey: ["comments"] });
@@ -459,35 +494,13 @@ export default function PollDetail() {
   });
 
   const handleReplyToRandom = () => {
-    // if (randomComment && replyToRandom.trim()) {
-    //   setPoll((prevPoll) => ({
-    //     ...prevPoll,
-    //     comments: prevPoll.comments.map((comment) =>
-    //       comment.id === randomComment.id
-    //         ? {
-    //             ...comment,
-    //             replies: [
-    //               ...comment.replies,
-    //               {
-    //                 id: Date.now().toString(),
-    //                 text: replyToRandom.trim(),
-    //                 likes: 0,
-    //                 userLiked: false,
-    //                 userVote: poll.userVoted,
-    //                 replies: [],
-    //               },
-    //             ],
-    //           }
-    //         : comment,
-    //     ),
-    //   }));
-    // setReplyToRandom("");
-    // setShowRandomComment(false);
-    // setTimeout(() => {
-    //   randomCommentRef.current?.scrollIntoView({ behavior: "smooth" });
-    // }, 100);
+    if (randomComment && replyToRandom.trim()) {
+      postCommentMutation(replyToRandom);
+      setReplyToRandom("");
+      setShowRandomComment(false);
+      setShowVoteDialog(false);
+    }
   };
-  // }
 
   const handleSkipRandom = () => {
     setShowRandomComment(false);
@@ -560,7 +573,7 @@ export default function PollDetail() {
       (answer) => answer.answer === b,
     ).length;
     return [aVotes, bVotes];
-  }, [selectedPollData?.answers, selectedPollData?.options]);
+  }, [selectedPollData]);
 
   const percentages = useMemo(() => {
     if (!selectedPollData) return [0, 0];
@@ -574,7 +587,7 @@ export default function PollDetail() {
     const bPercentage = bVotes ? (bVotes / totalVotes) * 100 : 0;
 
     return [aPercentage, bPercentage];
-  }, [voteCounts, selectedPollData?.answers.length, selectedPollData?.options]);
+  }, [selectedPollData, voteCounts]);
 
   if (!selectedPollData) {
     return <div>Loading...</div>;
@@ -586,7 +599,8 @@ export default function PollDetail() {
       <div className="container mx-auto max-w-4xl px-4 py-6">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center text-blue-500 hover:text-blue-600"
+          prefetch
+          className="mb-6 inline-flex items-center text-primary hover:text-primary/80"
         >
           &larr; <span className="ml-2">Back to Polls</span>
         </Link>
@@ -670,6 +684,109 @@ export default function PollDetail() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showVoteDialog} onOpenChange={setShowVoteDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
+                <MessageCircle className="h-6 w-6 text-primary" />
+                Share Your Perspective
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-base text-gray-600">
+              Would you like to explain why you voted {selectedVote}?
+            </DialogDescription>
+          </DialogHeader>
+
+          {!showRandomComment ? (
+            <div className="grid gap-4 py-4">
+              <AnimatePresence>
+                {voteDialogComment && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Textarea
+                      placeholder="Share your thoughts..."
+                      value={voteDialogComment}
+                      onChange={(e) => setVoteDialogComment(e.target.value)}
+                      className="min-h-[120px] w-full rounded-lg border border-amber-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={() => {
+                    if (voteDialogComment) {
+                      handleVoteDialogSubmit(false);
+                    } else {
+                      setVoteDialogComment(" "); // Add a space to trigger textarea appearance
+                    }
+                  }}
+                  className="h-14 w-full text-lg font-medium transition-colors hover:opacity-90"
+                  style={{
+                    backgroundColor: THEME_COLORS.optionA.bgDark,
+                    color: THEME_COLORS.optionA.text,
+                  }}
+                >
+                  {voteDialogComment ? "Submit Comment" : "Leave a Comment"}
+                </Button>
+                <Button
+                  onClick={() => handleVoteDialogSubmit(true)}
+                  className="h-14 w-full text-lg font-medium transition-colors hover:opacity-90"
+                  style={{
+                    backgroundColor: THEME_COLORS.optionB.bgDark,
+                    color: THEME_COLORS.optionB.text,
+                  }}
+                >
+                  Join Discussion!
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // Random comment reply view
+            <div className="grid gap-4 py-4">
+              <div className="rounded-lg bg-amber-50 p-4">
+                <p className="mb-2 text-sm text-gray-600">Reply to:</p>
+                <p className="text-gray-800">{randomComment?.content}</p>
+              </div>
+              <Textarea
+                placeholder="Write your reply..."
+                value={replyToRandom}
+                onChange={(e) => setReplyToRandom(e.target.value)}
+                className="min-h-[120px] w-full rounded-lg border border-amber-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={() => setShowRandomComment(false)}
+                  className="h-14 transition-colors hover:opacity-90"
+                  style={{
+                    backgroundColor: THEME_COLORS.optionA.bgDark,
+                    color: THEME_COLORS.optionA.text,
+                  }}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleReplyToRandom}
+                  className="h-14 transition-colors hover:opacity-90"
+                  disabled={!replyToRandom.trim()}
+                  style={{
+                    backgroundColor: THEME_COLORS.optionB.bgDark,
+                    color: THEME_COLORS.optionB.text,
+                  }}
+                >
+                  Post Reply
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
