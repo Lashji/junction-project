@@ -20,7 +20,7 @@ const markUserVerified = async (userId: string) => {
     `${env.NEXT_PUBLIC_BACKEND_URL}/auth/markUserVerified?userId=${userId}`,
   );
 
-  const data = await response.json();
+  const data = (await response.json()) as { success: boolean };
   return data;
 };
 
@@ -90,7 +90,7 @@ export default function SetupClient({ tempIdToken }: Props) {
       const credential = W3CCredential.fromJSON(vc);
       console.log("credential", credential);
 
-      wallet.saveCredential(credential);
+      void wallet.saveCredential(credential);
 
       router.push("/account");
     }

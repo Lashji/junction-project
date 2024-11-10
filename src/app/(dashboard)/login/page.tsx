@@ -1,6 +1,6 @@
 "use client";
-import { IoMdKey } from "react-icons/io";
 
+import { KeyIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 
 export default function LoginPage() {
@@ -21,7 +21,7 @@ export default function LoginPage() {
     <div className="flex h-screen items-center justify-center">
       <div className="m-16 flex flex-col items-center rounded-lg bg-card-foreground p-4">
         <div className="mt-[-8px]">
-          <IoMdKey size={100} />
+          <KeyIcon size={100} />
         </div>
         <p className="mb-2">You need to authenticate yourself to vote.</p>
         <p className="mb-2 pb-6">

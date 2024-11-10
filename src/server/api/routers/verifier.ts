@@ -36,24 +36,6 @@ export const verifierRouter = createTRPCRouter({
       ],
     };
 
-    // {
-    //     "circuitId": "credentialAtomicQuerySigV2",
-    //     "id": 1731190661,
-    //     "query": {
-    //       "allowedIssuers": [
-    //         "*"
-    //       ],
-    //       "context": "ipfs://QmZnhD9VRGM1Nrf5j6Eyygb1LqW9GqakcbrKEv4Jg62RMY",
-    //       "type": "test",
-    //       "skipClaimRevocationCheck": true,
-    //       "credentialSubject": {
-    //         "Nationality": {
-    //           "$eq": "FIN"
-    //         }
-    //       }
-    //     }
-    //   }
-
     const response = await fetch(`https://79ccaaa567b4.ngrok.app/sign-in`, {
       method: "POST",
       headers: {
@@ -62,7 +44,7 @@ export const verifierRouter = createTRPCRouter({
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as unknown;
     console.log("data", data);
 
     return data;

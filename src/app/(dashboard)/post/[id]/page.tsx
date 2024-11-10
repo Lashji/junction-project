@@ -314,9 +314,9 @@ export default function PollDetail() {
   const { mutate: answerPollMutation } = useMutation({
     mutationKey: ["answerPoll"],
     mutationFn: (answer: string) =>
-      answerPoll(selectedPollData?.id!, answer, userId!),
+      answerPoll(selectedPollData?.id ?? "", answer, userId!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["poll"] });
+      void queryClient.invalidateQueries({ queryKey: ["poll"] });
     },
   });
 
@@ -329,7 +329,7 @@ export default function PollDetail() {
 
   const handleVote = (optionIndex: 0 | 1) => {
     selectRandomComment(optionIndex);
-    answerPollMutation(selectedPollData?.options[optionIndex]!);
+    answerPollMutation(selectedPollData?.options[optionIndex] ?? "");
   };
 
   const selectRandomComment = (votedOption: 0 | 1) => {
@@ -347,7 +347,7 @@ export default function PollDetail() {
   const { mutate: postCommentMutation } = useMutation({
     mutationKey: ["postComment"],
     mutationFn: (comment: string) =>
-      postComment(comment, userId!, selectedPollData?.id!, ""),
+      postComment(comment, userId!, selectedPollData?.id ?? "", ""),
   });
 
   const handleReplyToRandom = () => {
