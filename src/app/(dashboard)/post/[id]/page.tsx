@@ -168,21 +168,15 @@ const postComment = async (
   userId: string,
   pollId: string,
   threadId?: string,
-  threadPosition?: number,
 ) => {
-  console.log(
-    "posting comment",
-    comment,
-    userId,
-    pollId,
-    threadId,
-    threadPosition,
-  );
+  console.log("posting comment", comment, userId, pollId, threadId);
 
   if (!comment || !userId || !pollId) {
     console.error("Missing required parameters for postComment");
     return null;
   }
+
+  console.log("THREAD ID", threadId);
 
   const response = await fetch(`${env.NEXT_PUBLIC_BACKEND_URL}/createComment`, {
     method: "POST",
@@ -194,7 +188,6 @@ const postComment = async (
       userId,
       pollId,
       threadId: threadId ?? "",
-      threadPosition: threadPosition ?? 0,
     }),
   });
 
@@ -434,7 +427,6 @@ export default function PollDetail() {
         userId!,
         selectedPollData?.id ?? "",
         threadId,
-        threadPosition,
       );
     },
     onSuccess: (data) => {

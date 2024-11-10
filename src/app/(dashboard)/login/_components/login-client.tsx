@@ -19,17 +19,12 @@ import {
   Smartphone,
   Users,
 } from "lucide-react";
+import SetupClient from "../../account/setup/_components/setup-client";
 
-export default function SetupPage() {
+export default function LoginClient({ tempIdToken }: { tempIdToken?: string }) {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
-  const error_description = searchParams.get("error_description");
 
-  useEffect(() => {
-    if (error) {
-      console.error("Login error:", error_description);
-    }
-  }, [error, error_description]);
+  const setup = searchParams.get("setup");
 
   const handleLogin = async () => {
     try {
@@ -47,7 +42,7 @@ export default function SetupPage() {
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <div className="flex flex-1 flex-col bg-foreground/95 px-16 py-20 text-primary-foreground">
+      <div className="flex max-w-[50vw] flex-1 flex-col bg-foreground/95 px-16 py-20 text-primary-foreground">
         <div className="flex-1">
           <Link href="/">
             <LucideGlobe className="mb-16 h-16 w-16 text-background" />
@@ -134,65 +129,61 @@ export default function SetupPage() {
       </div>
 
       {/* Right side - Login */}
-      <div className="bg-dot-pattern flex flex-1 flex-col items-center justify-center px-16 py-20">
-        <div className="w-full max-w-[400px] space-y-10">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {error_description ?? "An error occurred during verification"}
-              </AlertDescription>
-            </Alert>
-          )}
 
-          <div className="text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="mb-8 flex justify-center"
-            >
-              <div className="relative">
-                <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-primary/20 to-primary/40 blur-md" />
-                <div className="relative rounded-full bg-background p-4">
-                  <KeyRound className="h-8 w-8 text-primary" />
+      {setup && tempIdToken ? (
+        <SetupClient tempIdToken={tempIdToken} />
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center px-16 py-20">
+          <div className="w-full max-w-[400px] space-y-10">
+            <div className="text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8 flex justify-center"
+              >
+                <div className="relative">
+                  <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-primary/20 to-primary/40 blur-md" />
+                  <div className="relative rounded-full bg-background p-4">
+                    <KeyRound className="h-8 w-8 text-primary" />
+                  </div>
                 </div>
-              </div>
+              </motion.div>
+              <h2 className="mb-3 text-2xl font-semibold">Get Started</h2>
+              <p className="text-muted-foreground">
+                Create your digital identity using secure bank verification.
+                Your data stays under your control.
+              </p>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Button
+                onClick={handleLogin}
+                size="lg"
+                className="w-full py-6 text-lg"
+              >
+                Verify with Bank ID
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
             </motion.div>
-            <h2 className="mb-3 text-2xl font-semibold">Get Started</h2>
-            <p className="text-muted-foreground">
-              Create your digital identity using secure bank verification. Your
-              data stays under your control.
+
+            <p className="text-center text-sm text-muted-foreground">
+              By continuing, you agree to our{" "}
+              <Link href="/terms" className="underline hover:text-primary">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="underline hover:text-primary">
+                Privacy Policy
+              </Link>
             </p>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Button
-              onClick={handleLogin}
-              size="lg"
-              className="w-full py-6 text-lg"
-            >
-              Verify with Bank ID
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </motion.div>
-
-          <p className="text-center text-sm text-muted-foreground">
-            By continuing, you agree to our{" "}
-            <Link href="/terms" className="underline hover:text-primary">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="underline hover:text-primary">
-              Privacy Policy
-            </Link>
-          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }
