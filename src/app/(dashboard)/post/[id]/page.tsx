@@ -28,6 +28,23 @@ const fetchPoll = async (pollId: string) => {
   return data;
 };
 
+const fetchUnAnsweredPolls = async (userId: string) => {
+  console.log("fetching polls", userId);
+
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getUnansweredPolls?userId=${userId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  const data = (await response.json()) as unknown as Poll[];
+  console.log("response", data);
+  return data;
+};
+
 const fetchLastRepliedThreadForUser = async (
   userId: string,
   pollId: string,
@@ -65,20 +82,21 @@ const fetchUserAnswers = async (userId: string) => {
 };
 
 const answerPoll = async (pollId: string, answer: string, userId: string) => {
-  const response = await fetch(
-    `${env.NEXT_PUBLIC_BACKEND_URL}/answerPoll?pollId=${pollId}&answer=${answer}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        answer,
-        pollId,
-        userId,
-      }),
+  if (!pollId || !answer || !userId) {
+    console.error("Missing required parameters for answerPoll");
+    return null;
+  }
+  const response = await fetch(`${env.NEXT_PUBLIC_BACKEND_URL}/answerPoll`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      answer,
+      pollId,
+      userId,
+    }),
+  });
 
   const data = (await response.json()) as unknown as Answer;
   console.log("ANSWER POLL", data);
@@ -93,6 +111,38 @@ const fetchCommentVotes = async (commentId: string) => {
 
   const data = (await response.json()) as unknown as Vote;
   console.log("comment votes", data);
+
+  return data;
+};
+
+const postComment = async (
+  comment: string,
+  userId: string,
+  pollId: string,
+  threadId: string,
+) => {
+  console.log("posting comment", comment, userId, pollId, threadId);
+
+  if (!comment || !userId || !pollId || !threadId) {
+    console.error("Missing required parameters for postComment");
+    return null;
+  }
+
+  const response = await fetch(`${env.NEXT_PUBLIC_BACKEND_URL}/postComment`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      content: comment,
+      userId,
+      pollId,
+      threadId,
+    }),
+  });
+
+  const data = (await response.json()) as unknown as Comment;
+  console.log("POST COMMENT", data);
 
   return data;
 };
@@ -122,35 +172,102 @@ function DiscussionInput({
               : "Vote on the poll to join the discussion"
           }
           disabled={!userAnswered}
-          className="min-h-[120px] w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-[120px] w-full rounded-lg border border-amber-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
             {!userAnswered && "You need to vote before commenting"}
           </p>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                onClick={userAnswered ? onSubmit : undefined}
-                className="bg-amber-500 px-6 hover:bg-amber-600 disabled:opacity-50"
-                disabled={!userAnswered || !value.trim()}
-              >
-                Post Comment
-              </Button>
-            </PopoverTrigger>
-            {!userAnswered && (
-              <PopoverContent className="w-auto p-3">
-                <p className="text-sm text-gray-600">
-                  Please vote on the poll first
-                </p>
-              </PopoverContent>
-            )}
-          </Popover>
+          <Button
+            onClick={userAnswered ? onSubmit : undefined}
+            className="bg-amber-500 px-6 hover:bg-amber-600 disabled:opacity-50"
+            disabled={!userAnswered || !value.trim()}
+          >
+            Post Comment
+          </Button>
         </div>
       </div>
     </div>
   );
 }
+
+// Add a constant for the theme colors to maintain consistency
+const THEME_COLORS = {
+  optionA: {
+    bg: "#FFB89A",
+    border: "#FFB89A",
+    text: "#7C2D12", // amber-900 for good contrast
+  },
+  optionB: {
+    bg: "#FFA97A",
+    border: "#FFA97A",
+    text: "#7C2D12",
+  },
+};
+
+// Add this near the top of the file
+const DEMO_COMMENTS: (Comment & { likes?: number })[] = [
+  {
+    id: "1",
+    content:
+      "I strongly believe this is the right approach. The data clearly shows that this option has better long-term benefits.",
+    pollAnswer: "Yes",
+    userId: "user1",
+    pollId: "1",
+    threadId: "thread1",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    likes: 24,
+  },
+  {
+    id: "2",
+    content:
+      "While I respect the other perspective, I had to vote No. There are too many uncertainties and potential risks involved.",
+    pollAnswer: "No",
+    userId: "user2",
+    pollId: "1",
+    threadId: "thread2",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    likes: 15,
+  },
+  {
+    id: "3",
+    content:
+      "Voted Yes because the benefits outweigh the costs. We need to think about the long-term implications.",
+    pollAnswer: "Yes",
+    userId: "user3",
+    pollId: "1",
+    threadId: "thread3",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    likes: 8,
+  },
+  {
+    id: "4",
+    content:
+      "No way! Have you considered the economic impact? This could affect thousands of people negatively.",
+    pollAnswer: "No",
+    userId: "user4",
+    pollId: "1",
+    threadId: "thread4",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    likes: 12,
+  },
+  {
+    id: "5",
+    content:
+      "Yes voter here. The research backing this proposal is solid and peer-reviewed.",
+    pollAnswer: "Yes",
+    userId: "user5",
+    pollId: "1",
+    threadId: "thread5",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    likes: 3,
+  },
+];
 
 export default function PollDetail() {
   const [showRandomComment, setShowRandomComment] = useState(false);
@@ -172,54 +289,66 @@ export default function PollDetail() {
     enabled: !!id,
   });
 
+  const { data: leastRepliedThread } = useQuery({
+    queryKey: ["leastRepliedThread"],
+    queryFn: () =>
+      typeof id === "string"
+        ? fetchLastRepliedThreadForUser(id, userId!)
+        : null,
+    enabled: !!id && !!userId,
+  });
+  console.log("leastRepliedThread", leastRepliedThread);
+
+  const { data: unansweredPolls } = useQuery({
+    queryKey: ["unansweredPolls"],
+    queryFn: () => fetchUnAnsweredPolls(userId!),
+    enabled: !!userId,
+  });
+
   const { data: userAnswers } = useQuery({
     queryKey: ["userAnswers"],
     queryFn: () => (typeof id === "string" ? fetchUserAnswers(id) : null),
     enabled: !!id,
   });
 
-  const { mutate: addComment } = useMutation({
-    mutationKey: ["addComment"],
-    mutationFn: (comment: string) =>
-      answerPoll(selectedPollData?.id!, comment, userId!),
+  const { mutate: answerPollMutation } = useMutation({
+    mutationKey: ["answerPoll"],
+    mutationFn: (answer: string) =>
+      answerPoll(selectedPollData?.id!, answer, userId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["poll"] });
     },
   });
 
   const userAnswered = useMemo(() => {
-    return userAnswers?.some(
-      (answer) => answer.pollId === selectedPollData?.id,
-    );
+    if (!selectedPollData || !userAnswers) return false;
+    return userAnswers.some((answer) => answer.pollId === selectedPollData.id);
   }, [userAnswers, selectedPollData?.id]);
 
   console.log("selectedPollData", selectedPollData);
 
   const handleVote = (optionIndex: 0 | 1) => {
-    // setPoll((prevPoll) => {
-    //   const newVotes = [...prevPoll.votes];
-    //   newVotes[optionIndex]!++;
-    //   return {
-    //     ...prevPoll,
-    //     votes: newVotes as [number, number],
-    //     userVoted: optionIndex,
-    //   };
-    // });
-    // setShowRandomComment(true);
-    // selectRandomComment(optionIndex);
+    selectRandomComment(optionIndex);
+    answerPollMutation(selectedPollData?.options[optionIndex]!);
   };
 
   const selectRandomComment = (votedOption: 0 | 1) => {
-    // const oppositeComments = poll.comments.filter(
-    //   (comment) => comment.userVote !== votedOption,
-    // );
-    // if (oppositeComments.length > 0) {
-    //   const randomIndex = Math.floor(Math.random() * oppositeComments.length);
-    //   setRandomComment(oppositeComments[randomIndex]!);
-    // } else {
-    //   setRandomComment(null);
-    // }
+    const oppositeComments = selectedPollData?.comments.filter(
+      (comment) => comment.pollAnswer !== votedOption.toString(),
+    );
+    if (oppositeComments && oppositeComments.length > 0) {
+      const randomIndex = Math.floor(Math.random() * oppositeComments.length);
+      setRandomComment(oppositeComments[randomIndex]!);
+    } else {
+      setRandomComment(null);
+    }
   };
+
+  const { mutate: postCommentMutation } = useMutation({
+    mutationKey: ["postComment"],
+    mutationFn: (comment: string) =>
+      postComment(comment, userId!, selectedPollData?.id!, ""),
+  });
 
   const handleReplyToRandom = () => {
     // if (randomComment && replyToRandom.trim()) {
@@ -253,11 +382,11 @@ export default function PollDetail() {
   // }
 
   const handleSkipRandom = () => {
-    // setShowRandomComment(false);
+    setShowRandomComment(false);
   };
 
-  const handleAddComment = () => {
-    addComment(newComment);
+  const handleAddComment = async () => {
+    postCommentMutation(newComment);
     setNewComment("");
   };
 
@@ -371,6 +500,7 @@ export default function PollDetail() {
                 <div className="grid grid-cols-2 gap-4">
                   {selectedPollData.options.map((option, index) => (
                     <Button
+                      disabled={userAnswered}
                       key={option}
                       onClick={() => handleVote(index as 0 | 1)}
                       className="h-14 w-full text-lg"
@@ -417,26 +547,18 @@ export default function PollDetail() {
 
           {/* Comments list */}
           <div className="space-y-4">
-            {selectedPollData?.comments?.length > 0 ? (
-              selectedPollData.comments.map((comment) => (
-                <CommentItem
-                  key={comment.id}
-                  comment={comment}
-                  onLike={handleLikeComment}
-                  onReply={handleReply}
-                  pollOptions={selectedPollData.options}
-                  isRandom={comment.id === randomComment?.id}
-                  randomCommentRef={randomCommentRef}
-                />
-              ))
-            ) : (
-              <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-                <MessageSquare className="mx-auto mb-3 h-8 w-8 text-gray-400" />
-                <p className="text-gray-500">
-                  No comments yet. Be the first to share your thoughts!
-                </p>
-              </div>
-            )}
+            {/* Use DEMO_COMMENTS instead of selectedPollData.comments */}
+            {DEMO_COMMENTS.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                onLike={handleLikeComment}
+                onReply={handleReply}
+                pollOptions={selectedPollData?.options ?? ["Yes", "No"]}
+                isRandom={comment.id === randomComment?.id}
+                randomCommentRef={randomCommentRef}
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -460,10 +582,17 @@ function CommentItem({
   onReply,
   isRandom,
   randomCommentRef,
+  pollOptions,
   depth = 0,
-}: CommentItemProps) {
+}: CommentItemProps & { comment: Comment & { likes?: number } }) {
   const [replyText, setReplyText] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
+  const [localLikes, setLocalLikes] = useState(comment.likes ?? 0);
+  const [hasLiked, setHasLiked] = useState(false);
+
+  // Determine which option color to use
+  const isOptionA = comment.pollAnswer === pollOptions[0];
+  const voteColor = isOptionA ? THEME_COLORS.optionA : THEME_COLORS.optionB;
 
   return (
     <div
@@ -471,29 +600,54 @@ function CommentItem({
       ref={isRandom ? randomCommentRef : undefined}
     >
       <div className="rounded-lg bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-md">
-        <p className="mb-3 text-gray-800">{comment.content}</p>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-amber-600">Voted: {comment.pollAnswer}</span>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onLike(comment.id)}
-              className="text-gray-500 hover:text-blue-500"
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              style={{
+                backgroundColor: voteColor.bg,
+                color: voteColor.text,
+              }}
+              className="rounded-full px-4 py-1.5 text-sm font-medium shadow-sm"
             >
-              <ThumbsUp className="mr-2 h-4 w-4" />
-              Like
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowReplyInput(!showReplyInput)}
-              className="text-gray-500 hover:text-blue-500"
-            >
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Reply
-            </Button>
+              Voted {comment.pollAnswer}
+            </div>
+            <span className="text-sm text-gray-500">
+              {new Date(comment.createdAt).toLocaleTimeString()}
+            </span>
           </div>
+        </div>
+
+        <p className="mb-4 text-gray-800">{comment.content}</p>
+
+        <div className="flex items-center justify-end gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (!hasLiked) {
+                setLocalLikes((prev) => prev + 1);
+                setHasLiked(true);
+                onLike(comment.id);
+              }
+            }}
+            className={`${
+              hasLiked
+                ? "text-amber-600 hover:text-amber-700"
+                : "text-gray-500 hover:text-amber-600"
+            }`}
+          >
+            <ThumbsUp className="mr-2 h-4 w-4" />
+            {localLikes} {localLikes === 1 ? "Like" : "Likes"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowReplyInput(!showReplyInput)}
+            className="text-gray-500 hover:text-amber-600"
+          >
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Reply
+          </Button>
         </div>
 
         {showReplyInput && (
@@ -502,7 +656,7 @@ function CommentItem({
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
-              className="flex-1"
+              className="flex-1 border-amber-200 focus:border-amber-500 focus:ring-amber-200"
             />
             <Button
               onClick={() => {
@@ -512,7 +666,7 @@ function CommentItem({
                   setShowReplyInput(false);
                 }
               }}
-              className="px-6"
+              className="bg-amber-500 px-6 hover:bg-amber-600"
             >
               <Send className="h-4 w-4" />
             </Button>
