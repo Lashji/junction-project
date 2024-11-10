@@ -56,9 +56,25 @@ const fetchPollThreads = async (pollId: string) => {
   );
 
   const data = (await response.json()) as unknown as Threads;
-  console.log("poll threads", data);
 
-  return data;
+  // Sort and nest comments within each thread
+  const sortedThreads: Threads = Object.fromEntries(
+    Object.entries(data).map(([threadId, comments]) => {
+      // First sort by threadPosition and createdAt
+      const sortedComments = [...comments].sort((a, b) => {
+        if (a.threadPosition !== b.threadPosition) {
+          return a.threadPosition - b.threadPosition;
+        }
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
+
+      return [threadId, sortedComments];
+    }),
+  );
+
+  return sortedThreads;
 };
 
 const fetchUnAnsweredPolls = async (userId: string) => {
@@ -109,8 +125,6 @@ const fetchUserAnswers = async (userId: string) => {
   );
 
   const data = (await response.json()) as unknown as Answer[];
-  console.log("user answers", data);
-
   return data;
 };
 
@@ -153,8 +167,16 @@ const postComment = async (
   userId: string,
   pollId: string,
   threadId?: string,
+  threadPosition?: number,
 ) => {
-  console.log("posting comment", comment, userId, pollId, threadId);
+  console.log(
+    "posting comment",
+    comment,
+    userId,
+    pollId,
+    threadId,
+    threadPosition,
+  );
 
   if (!comment || !userId || !pollId) {
     console.error("Missing required parameters for postComment");
@@ -171,6 +193,7 @@ const postComment = async (
       userId,
       pollId,
       threadId: threadId ?? "",
+      threadPosition: threadPosition ?? 0,
     }),
   });
 
@@ -247,7 +270,7 @@ type CommentWithReplies = Comment & {
 };
 
 // Add this near the top of the file
-const DEMO_COMMENTS: CommentWithReplies[] = [
+const DEMO_COMMENTS: Comment[] = [
   {
     id: "1",
     content:
@@ -258,35 +281,7 @@ const DEMO_COMMENTS: CommentWithReplies[] = [
     threadId: "thread1",
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    likes: 24,
-    replies: [
-      {
-        id: "1.1",
-        content:
-          "Could you share the specific data you're referring to? I'm interested in seeing the numbers behind this.",
-        pollAnswer: "No",
-        userId: "user6",
-        pollId: "1",
-        threadId: "thread1",
-        threadPosition: 1,
-        createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-        likes: 8,
-        replies: [
-          {
-            id: "1.1.1",
-            content:
-              "Here's a link to the recent study: https://www.tandfonline.com/doi/full/10.1080/13600869.2024.2398915. The key findings on page 47 are particularly relevant.",
-            pollAnswer: "Yes",
-            userId: "user1",
-            pollId: "1",
-            threadId: "thread1",
-            threadPosition: 2,
-            createdAt: new Date(Date.now() - 1000 * 60 * 85).toISOString(),
-            likes: 15,
-          },
-        ],
-      },
-    ],
+    replies: true,
   },
   {
     id: "2",
@@ -298,21 +293,7 @@ const DEMO_COMMENTS: CommentWithReplies[] = [
     threadId: "thread2",
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    likes: 15,
-    replies: [
-      {
-        id: "2.1",
-        content:
-          "What specific risks are you most concerned about? I'm curious to understand the opposition better.",
-        pollAnswer: "Yes",
-        userId: "user7",
-        pollId: "1",
-        threadId: "thread2",
-        threadPosition: 1,
-        createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-        likes: 6,
-      },
-    ],
+    replies: false,
   },
   {
     id: "3",
@@ -324,35 +305,7 @@ const DEMO_COMMENTS: CommentWithReplies[] = [
     threadId: "thread3",
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    likes: 18,
-    replies: [
-      {
-        id: "3.1",
-        content:
-          "Those regions had different economic conditions though. We need to consider local factors.",
-        pollAnswer: "No",
-        userId: "user8",
-        pollId: "1",
-        threadId: "thread3",
-        threadPosition: 1,
-        createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
-        likes: 12,
-        replies: [
-          {
-            id: "3.1.1",
-            content:
-              "Actually, if you look at the demographic data, our region is quite similar to those success cases.",
-            pollAnswer: "Yes",
-            userId: "user3",
-            pollId: "1",
-            threadId: "thread3",
-            threadPosition: 2,
-            createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-            likes: 9,
-          },
-        ],
-      },
-    ],
+    replies: true,
   },
   {
     id: "4",
@@ -364,21 +317,7 @@ const DEMO_COMMENTS: CommentWithReplies[] = [
     threadId: "thread4",
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    likes: 22,
-    replies: [
-      {
-        id: "4.1",
-        content:
-          "The environmental benefits are overstated. There are hidden costs we're not discussing.",
-        pollAnswer: "No",
-        userId: "user9",
-        pollId: "1",
-        threadId: "thread4",
-        threadPosition: 1,
-        createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-        likes: 7,
-      },
-    ],
+    replies: false,
   },
   {
     id: "5",
@@ -390,21 +329,7 @@ const DEMO_COMMENTS: CommentWithReplies[] = [
     threadId: "thread5",
     threadPosition: 0,
     createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    likes: 31,
-    replies: [
-      {
-        id: "5.1",
-        content:
-          "Could you elaborate on these best practices? Would love to learn more.",
-        pollAnswer: "Yes",
-        userId: "user10",
-        pollId: "1",
-        threadId: "thread5",
-        threadPosition: 1,
-        createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-        likes: 4,
-      },
-    ],
+    replies: false,
   },
 ];
 
@@ -451,9 +376,9 @@ export default function PollDetail() {
   });
 
   const { data: userAnswers } = useQuery({
-    queryKey: ["userAnswers"],
-    queryFn: () => (typeof id === "string" ? fetchUserAnswers(id) : null),
-    enabled: !!id,
+    queryKey: ["userAnswers", userId],
+    queryFn: () => (userId ? fetchUserAnswers(userId) : null),
+    enabled: !!userId,
   });
 
   const { mutate: answerPollMutation } = useMutation({
@@ -503,16 +428,27 @@ export default function PollDetail() {
 
   const { mutate: postCommentMutation } = useMutation({
     mutationKey: ["postComment"],
-    mutationFn: (comment: string) =>
-      postComment(
+    mutationFn: (comment: string) => {
+      // Find the parent comment's position if replying
+      const parentComment = Object.values(pollThreads ?? {})
+        .flat()
+        .find((c) => c.id === randomComment?.id);
+
+      const threadPosition = parentComment
+        ? parentComment.threadPosition + 1
+        : 0;
+
+      return postComment(
         comment,
         userId!,
         selectedPollData?.id ?? "",
         randomComment?.threadId ?? "",
-      ),
+        threadPosition,
+      );
+    },
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["pollThreads"] });
       void queryClient.invalidateQueries({ queryKey: ["poll"] });
-      void queryClient.invalidateQueries({ queryKey: ["comments"] });
     },
   });
 
@@ -554,7 +490,14 @@ export default function PollDetail() {
   };
 
   const handleReply = (commentId: string, replyText: string) => {
-    // Type-safe comment handling would go here
+    // Get the thread ID from the comment we're replying to
+    const threadId = Object.entries(pollThreads ?? {}).find(([_, comments]) =>
+      comments.some((comment) => comment.id === commentId),
+    )?.[0];
+
+    if (threadId) {
+      postCommentMutation(replyText);
+    }
   };
 
   const addReply = (comments: Comment[], id: string, replyText: string) => {
@@ -699,17 +642,30 @@ export default function PollDetail() {
 
           {/* Comments list */}
           <div className="space-y-4">
-            {[...(realComments ?? []), ...DEMO_COMMENTS].map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                onLike={handleLikeComment}
-                onReply={handleReply}
-                pollOptions={selectedPollData?.options ?? ["Yes", "No"]}
-                isRandom={comment.id === randomComment?.id}
-                randomCommentRef={randomCommentRef}
-              />
-            ))}
+            {pollThreads &&
+              Object.entries(pollThreads).map(([threadId, comments]) => {
+                // Sort comments by threadPosition first
+                const sortedComments = [...comments].sort(
+                  (a, b) => a.threadPosition - b.threadPosition,
+                );
+
+                return (
+                  <div key={threadId}>
+                    {sortedComments.map((comment) => (
+                      <CommentItem
+                        key={comment.id}
+                        comment={comment}
+                        onLike={handleLikeComment}
+                        onReply={handleReply}
+                        pollOptions={selectedPollData?.options ?? ["Yes", "No"]}
+                        isRandom={comment.id === randomComment?.id}
+                        randomCommentRef={randomCommentRef}
+                        depth={comment.threadPosition}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
           </div>
         </div>
       </div>
@@ -839,10 +795,10 @@ function CommentItem({
   isRandom,
   randomCommentRef,
   depth = 0,
-}: CommentItemProps & { comment: CommentWithReplies }) {
+}: CommentItemProps) {
   const [replyText, setReplyText] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
-  const [localLikes, setLocalLikes] = useState(comment.likes ?? 0);
+  const [localLikes, setLocalLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
 
   // Determine which option color to use
@@ -927,22 +883,6 @@ function CommentItem({
             >
               <Send className="h-4 w-4" />
             </Button>
-          </div>
-        )}
-
-        {/* Render nested replies */}
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-4 space-y-4">
-            {comment.replies.map((reply) => (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
-                onLike={onLike}
-                onReply={onReply}
-                pollOptions={pollOptions}
-                depth={depth + 1}
-              />
-            ))}
           </div>
         )}
       </div>
