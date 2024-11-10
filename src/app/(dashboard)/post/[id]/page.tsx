@@ -14,7 +14,7 @@ import {
 import Navbar from "~/app/_components/navbar";
 import { env } from "~/env";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Answer, Comment, Vote, Poll } from "~/types";
+import { type Answer, type Comment, type Vote, type Poll } from "~/types";
 import { useAuth } from "~/app/_context/auth-context";
 
 const fetchPoll = async (pollId: string) => {
@@ -119,16 +119,16 @@ const postComment = async (
   comment: string,
   userId: string,
   pollId: string,
-  threadId: string,
+  threadId?: string,
 ) => {
   console.log("posting comment", comment, userId, pollId, threadId);
 
-  if (!comment || !userId || !pollId || !threadId) {
+  if (!comment || !userId || !pollId) {
     console.error("Missing required parameters for postComment");
     return null;
   }
 
-  const response = await fetch(`${env.NEXT_PUBLIC_BACKEND_URL}/postComment`, {
+  const response = await fetch(`${env.NEXT_PUBLIC_BACKEND_URL}/createComment`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -137,7 +137,7 @@ const postComment = async (
       content: comment,
       userId,
       pollId,
-      threadId,
+      threadId: threadId ?? "",
     }),
   });
 
@@ -383,7 +383,7 @@ export default function PollDetail() {
   const { userId } = useAuth();
   const randomCommentRef = useRef<HTMLDivElement>(null);
 
-  console.log("ID", id);
+  // console.log("ID", id);
 
   const queryClient = useQueryClient();
 
@@ -401,7 +401,7 @@ export default function PollDetail() {
         : null,
     enabled: !!id && !!userId,
   });
-  console.log("leastRepliedThread", leastRepliedThread);
+  // console.log("leastRepliedThread", leastRepliedThread);
 
   const { data: unansweredPolls } = useQuery({
     queryKey: ["unansweredPolls"],
@@ -427,12 +427,12 @@ export default function PollDetail() {
   const userAnswered = useMemo(() => {
     if (!selectedPollData || !userAnswers) return false;
     return userAnswers.some((answer) => answer.pollId === selectedPollData.id);
-  }, [userAnswers, selectedPollData?.id]);
+  }, [selectedPollData, userAnswers]);
 
-  console.log("selectedPollData", selectedPollData);
+  // console.log("selectedPollData", selectedPollData);
 
   const handleVote = (optionIndex: 0 | 1) => {
-    selectRandomComment(optionIndex);
+    // selectRandomComment(optionIndex);
     answerPollMutation(selectedPollData?.options[optionIndex] ?? "");
   };
 
@@ -452,6 +452,10 @@ export default function PollDetail() {
     mutationKey: ["postComment"],
     mutationFn: (comment: string) =>
       postComment(comment, userId!, selectedPollData?.id ?? "", ""),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["poll"] });
+      void queryClient.invalidateQueries({ queryKey: ["comments"] });
+    },
   });
 
   const handleReplyToRandom = () => {

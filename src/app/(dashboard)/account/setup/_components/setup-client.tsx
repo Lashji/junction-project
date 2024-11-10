@@ -17,15 +17,17 @@ interface Props {
 
 const markUserVerified = async (userId: string) => {
   const response = await fetch(
-    `${env.NEXT_PUBLIC_BACKEND_URL}/auth/markUserVerified?userId=${userId}`,
+    `${env.NEXT_PUBLIC_BACKEND_URL}/auth/markUserStrong?userId=${userId}`,
   );
+  console.log("marking user verified response", response);
 
   const data = (await response.json()) as { success: boolean };
+  console.log("marking user verified data", data);
   return data;
 };
 
 export default function SetupClient({ tempIdToken }: Props) {
-  const { isAuthenticated, actions, did, userId } = useAuth();
+  const { isAuthenticated, verified, actions, did, userId } = useAuth();
   const [credentialData, setCredentialData] = useState<IssuedCredential | null>(
     null,
   );
@@ -44,15 +46,27 @@ export default function SetupClient({ tempIdToken }: Props) {
       if (tempIdToken && !tokenData) {
         const data = JSON.parse(tempIdToken) as unknown as TokenData;
         setTokenData(() => data);
-        if (userId) {
-          markUserVerifiedMutation(userId);
-        }
+
         await actions.initialize(data);
       }
     };
 
+    if (userId && !verified) {
+      actions.setVerified(true);
+      console.log("marking user verified", userId);
+
+      markUserVerifiedMutation(userId);
+    }
+
     void handleInitializeUserWallet();
-  }, [actions, tempIdToken, tokenData]);
+  }, [
+    actions,
+    markUserVerifiedMutation,
+    tempIdToken,
+    tokenData,
+    userId,
+    verified,
+  ]);
 
   const {
     data,
