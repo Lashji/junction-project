@@ -16,15 +16,11 @@ export default function NavbarClient() {
         </Link>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-1">
         {isAuthenticated ? (
           <>
-            <Link href="/account">
-              <Button variant="ghost">
-                Welcome, <BadgeCheck className="-mr-1 h-4 w-4" />
-                <span className="font-bold">{userId ?? "Anonymous"}</span>
-              </Button>
-            </Link>
+            Welcome, <BadgeCheck className="h-4 w-4" />
+            <span className="font-bold">{userId ?? "Anonymous"}</span>
             <Button
               variant="ghost"
               onClick={logout}
@@ -35,7 +31,7 @@ export default function NavbarClient() {
           </>
         ) : (
           <Link href="/login">
-            <Button className="bg-foreground">Sign In</Button>
+            <Button className="bg-foreground">Verify</Button>
           </Link>
         )}
       </div>
