@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "../_context/auth-context";
+import { BadgeCheck } from "lucide-react";
 
 export default function NavbarClient() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, userId, verified } = useAuth();
 
   return (
     <>
@@ -15,12 +16,11 @@ export default function NavbarClient() {
         </Link>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-1">
         {isAuthenticated ? (
           <>
-            <Link href="/account">
-              <Button variant="ghost">Account</Button>
-            </Link>
+            Welcome, <BadgeCheck className="h-4 w-4" />
+            <span className="font-bold">{userId ?? "Anonymous"}</span>
             <Button
               variant="ghost"
               onClick={logout}
@@ -31,7 +31,7 @@ export default function NavbarClient() {
           </>
         ) : (
           <Link href="/login">
-            <Button className="bg-foreground">Sign In</Button>
+            <Button className="bg-foreground">Verify</Button>
           </Link>
         )}
       </div>

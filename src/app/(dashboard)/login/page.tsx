@@ -1,33 +1,16 @@
-"use client";
-
+import { KeyIcon } from "lucide-react";
+import { Suspense } from "react";
 import { Button } from "~/components/ui/button";
+import LoginClient from "./_components/login-client";
+import { cookies } from "next/headers";
 
-export default function LoginPage() {
-  const handleLogin = async () => {
-    try {
-      const response = await fetch("/api/auth/sign-in", {
-        method: "POST",
-      });
-      const { url } = (await response.json()) as { url: string };
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (error) {
-      console.error("Failed to initialize authentication:", error);
-    }
-  };
+export default async function LoginPage() {
+  const cookieStore = await cookies();
+  const tempIdToken = cookieStore.get("temp_id_token")?.value;
+
   return (
-    <div className="container mx-auto p-4">
-      <div className="p-4 mt-6 mb-6 bg-card-foreground rounded-lg">
-        <h1 className="mb-4 text-2xl font-bold">
-          Authenticate yourself to vote
-        </h1>
-        <p className="mb-2 ">
-          You need to authenticate yourself to vote. Quorum guarantee you 100%
-          anonymity in voting process.
-        </p>
-        <Button variant="default" onClick={handleLogin}>Authenticate</Button>
-      </div>
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginClient tempIdToken={tempIdToken} />
+    </Suspense>
   );
 }

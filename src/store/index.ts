@@ -16,6 +16,7 @@ interface AuthState {
   visitorId?: string;
   tokenData?: TokenData;
   userId?: string;
+  verified: boolean;
 }
 
 interface AuthActions {
@@ -25,6 +26,7 @@ interface AuthActions {
   setNationality: (nationality: string) => void;
   setInitialized: (initialized: boolean) => void;
   setUserId: (userId?: string) => void;
+  setVerified: (verified: boolean) => void;
 }
 
 interface StoreState extends AuthState {
@@ -46,6 +48,7 @@ export const useStore = create<StoreState>((set, get) => ({
   fingerprintToken: undefined,
   visitorId: undefined,
   userId: undefined,
+  verified: false,
   // Actions
   actions: {
     initialize: async (tokenData?: TokenData) => {
@@ -79,7 +82,7 @@ export const useStore = create<StoreState>((set, get) => ({
     setUserId: (userId?: string) =>
       userId ? set({ userId }) : set({ userId: undefined }),
     setInitialized: (initialized: boolean) => set({ initialized }),
-
+    setVerified: (verified: boolean) => set({ verified }),
     logout: () => {
       localStorage.clear();
       set({

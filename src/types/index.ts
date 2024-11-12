@@ -52,6 +52,7 @@ export type Poll = {
 export type Threads = Record<string, Comment[]>;
 
 export type Comment = {
+  replies: boolean;
   id: string;
   content: string;
   pollAnswer: string;

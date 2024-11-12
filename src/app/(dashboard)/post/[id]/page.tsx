@@ -3,7 +3,14 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { ThumbsUp, MessageSquare, Send } from "lucide-react";
+import {
+  ThumbsUp,
+  MessageSquare,
+  Send,
+  Check,
+  X,
+  MessageCircle,
+} from "lucide-react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,8 +21,23 @@ import {
 import Navbar from "~/app/_components/navbar";
 import { env } from "~/env";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Answer, Comment, Vote, Poll } from "~/types";
+import {
+  type Answer,
+  type Comment,
+  type Vote,
+  type Poll,
+  Threads,
+} from "~/types";
 import { useAuth } from "~/app/_context/auth-context";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Textarea } from "~/components/ui/textarea";
+import { motion, AnimatePresence } from "framer-motion";
 
 const fetchPoll = async (pollId: string) => {
   const response = await fetch(
@@ -28,18 +50,63 @@ const fetchPoll = async (pollId: string) => {
   return data;
 };
 
-const fetchLastRepliedThreadForUser = async (
-  userId: string,
-  pollId: string,
-) => {
+const fetchPollThreads = async (pollId: string) => {
   const response = await fetch(
-    `${env.NEXT_PUBLIC_BACKEND_URL}/getLastRepliedThreadForUser?userId=${userId}&pollId=${pollId}`,
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getPollThreads?pollId=${pollId}`,
   );
 
-  const data = (await response.json()) as unknown as Comment;
+  const data = (await response.json()) as unknown as Threads;
+
+  // Sort and nest comments within each thread
+  const sortedThreads: Threads = Object.fromEntries(
+    Object.entries(data).map(([threadId, comments]) => {
+      // First sort by threadPosition and createdAt
+      const sortedComments = [...comments].sort((a, b) => {
+        if (a.threadPosition !== b.threadPosition) {
+          return a.threadPosition - b.threadPosition;
+        }
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
+
+      return [threadId, sortedComments];
+    }),
+  );
+
+  return sortedThreads;
+};
+
+const fetchUnAnsweredPolls = async (userId: string) => {
+  console.log("fetching polls", userId);
+
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getUnansweredPolls?userId=${userId}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  const data = (await response.json()) as unknown as Poll[];
+  console.log("response", data);
+  return data;
+};
+
+const fetchLastRepliedThreadForUser = async (
+  pollId: string,
+  userId: string,
+) => {
+  const response = await fetch(
+    `${env.NEXT_PUBLIC_BACKEND_URL}/getLeastRepliedThreadForUser?userId=${userId}&pollId=${pollId}`,
+  );
+
+  const data = (await response.json()) as unknown as Comment[];
   console.log("last replied thread", data);
 
-  return data;
+  // Return the first comment from the array
+  return data[0] ?? null;
 };
 
 const fetchUserComments = async (userId: string) => {
@@ -59,26 +126,25 @@ const fetchUserAnswers = async (userId: string) => {
   );
 
   const data = (await response.json()) as unknown as Answer[];
-  console.log("user answers", data);
-
   return data;
 };
 
 const answerPoll = async (pollId: string, answer: string, userId: string) => {
-  const response = await fetch(
-    `${env.NEXT_PUBLIC_BACKEND_URL}/answerPoll?pollId=${pollId}&answer=${answer}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        answer,
-        pollId,
-        userId,
-      }),
+  if (!pollId || !answer || !userId) {
+    console.error("Missing required parameters for answerPoll");
+    return null;
+  }
+  const response = await fetch(`${env.NEXT_PUBLIC_BACKEND_URL}/answerPoll`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      answer,
+      pollId,
+      userId,
+    }),
+  });
 
   const data = (await response.json()) as unknown as Answer;
   console.log("ANSWER POLL", data);
@@ -93,6 +159,40 @@ const fetchCommentVotes = async (commentId: string) => {
 
   const data = (await response.json()) as unknown as Vote;
   console.log("comment votes", data);
+
+  return data;
+};
+
+const postComment = async (
+  comment: string,
+  userId: string,
+  pollId: string,
+  threadId?: string,
+) => {
+  console.log("posting comment", comment, userId, pollId, threadId);
+
+  if (!comment || !userId || !pollId) {
+    console.error("Missing required parameters for postComment");
+    return null;
+  }
+
+  console.log("THREAD ID", threadId);
+
+  const response = await fetch(`${env.NEXT_PUBLIC_BACKEND_URL}/createComment`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      content: comment,
+      userId,
+      pollId,
+      threadId: threadId ?? "",
+    }),
+  });
+
+  const data = (await response.json()) as unknown as Comment;
+  console.log("POST COMMENT", data);
 
   return data;
 };
@@ -122,35 +222,110 @@ function DiscussionInput({
               : "Vote on the poll to join the discussion"
           }
           disabled={!userAnswered}
-          className="min-h-[120px] w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-[120px] w-full rounded-lg border border-amber-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
             {!userAnswered && "You need to vote before commenting"}
           </p>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                onClick={userAnswered ? onSubmit : undefined}
-                className="bg-amber-500 px-6 hover:bg-amber-600 disabled:opacity-50"
-                disabled={!userAnswered || !value.trim()}
-              >
-                Post Comment
-              </Button>
-            </PopoverTrigger>
-            {!userAnswered && (
-              <PopoverContent className="w-auto p-3">
-                <p className="text-sm text-gray-600">
-                  Please vote on the poll first
-                </p>
-              </PopoverContent>
-            )}
-          </Popover>
+          <Button
+            onClick={userAnswered ? onSubmit : undefined}
+            className="bg-amber-500 px-6 hover:bg-amber-600 disabled:opacity-50"
+            disabled={!userAnswered || !value.trim()}
+          >
+            Post Comment
+          </Button>
         </div>
       </div>
     </div>
   );
 }
+
+// Add a constant for the theme colors to maintain consistency
+const THEME_COLORS = {
+  optionA: {
+    bg: "#FFB89A",
+    bgDark: "#FF9B73", // Darker shade for buttons
+    border: "#FFB89A",
+    text: "#7C2D12", // amber-900 for good contrast
+  },
+  optionB: {
+    bg: "#FFA97A",
+    bgDark: "#FF8C53", // Darker shade for buttons
+    border: "#FFA97A",
+    text: "#7C2D12",
+  },
+};
+
+// Update the Comment type to include replies
+type CommentWithReplies = Comment & {
+  likes?: number;
+  replies?: CommentWithReplies[];
+};
+
+// Add this near the top of the file
+const DEMO_COMMENTS: Comment[] = [
+  {
+    id: "1",
+    content:
+      "I strongly believe this is the right approach. The data clearly shows that this option has better long-term benefits.",
+    pollAnswer: "Yes",
+    userId: "user1",
+    pollId: "1",
+    threadId: "thread1",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    replies: true,
+  },
+  {
+    id: "2",
+    content:
+      "While I respect the other perspective, I had to vote No. There are too many uncertainties and potential risks involved.",
+    pollAnswer: "No",
+    userId: "user2",
+    pollId: "1",
+    threadId: "thread2",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    replies: false,
+  },
+  {
+    id: "3",
+    content:
+      "The economic implications are significant. We've seen similar initiatives succeed in other regions.",
+    pollAnswer: "Yes",
+    userId: "user3",
+    pollId: "1",
+    threadId: "thread3",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    replies: true,
+  },
+  {
+    id: "4",
+    content:
+      "The environmental impact alone makes this worth supporting. We need to think long-term.",
+    pollAnswer: "Yes",
+    userId: "user4",
+    pollId: "1",
+    threadId: "thread4",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    replies: false,
+  },
+  {
+    id: "5",
+    content:
+      "As someone who works in this field, I can confirm that the proposed approach aligns with industry best practices.",
+    pollAnswer: "Yes",
+    userId: "user5",
+    pollId: "1",
+    threadId: "thread5",
+    threadPosition: 0,
+    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    replies: false,
+  },
+];
 
 export default function PollDetail() {
   const [showRandomComment, setShowRandomComment] = useState(false);
@@ -162,103 +337,148 @@ export default function PollDetail() {
   const { userId } = useAuth();
   const randomCommentRef = useRef<HTMLDivElement>(null);
 
-  console.log("ID", id);
+  // console.log("ID", id);
 
   const queryClient = useQueryClient();
 
   const { data: selectedPollData } = useQuery({
-    queryKey: ["poll"],
+    queryKey: ["poll", id],
     queryFn: () => (typeof id === "string" ? fetchPoll(id) : null),
     enabled: !!id,
   });
 
-  const { data: userAnswers } = useQuery({
-    queryKey: ["userAnswers"],
-    queryFn: () => (typeof id === "string" ? fetchUserAnswers(id) : null),
+  const { data: leastRepliedThread } = useQuery({
+    queryKey: ["leastRepliedThread", id, userId],
+    queryFn: () =>
+      typeof id === "string"
+        ? fetchLastRepliedThreadForUser(id, userId!)
+        : null,
+    enabled: !!id && !!userId,
+  });
+  // console.log("leastRepliedThread", leastRepliedThread);
+
+  const { data: pollThreads } = useQuery({
+    queryKey: ["pollThreads", id],
+    queryFn: () => (typeof id === "string" ? fetchPollThreads(id) : null),
     enabled: !!id,
   });
 
-  const { mutate: addComment } = useMutation({
-    mutationKey: ["addComment"],
-    mutationFn: (comment: string) =>
-      answerPoll(selectedPollData?.id!, comment, userId!),
+  const { data: unansweredPolls } = useQuery({
+    queryKey: ["unansweredPolls", userId],
+    queryFn: () => fetchUnAnsweredPolls(userId!),
+    enabled: !!userId,
+  });
+
+  const { data: userAnswers } = useQuery({
+    queryKey: ["userAnswers", userId],
+    queryFn: () => (userId ? fetchUserAnswers(userId) : null),
+    enabled: !!userId,
+  });
+
+  const { mutate: answerPollMutation } = useMutation({
+    mutationKey: ["answerPoll"],
+    mutationFn: (answer: string) =>
+      answerPoll(selectedPollData?.id ?? "", answer, userId!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["poll"] });
+      void queryClient.invalidateQueries({ queryKey: ["poll"] });
+      setShowVoteDialog(true);
     },
   });
 
   const userAnswered = useMemo(() => {
-    return userAnswers?.some(
-      (answer) => answer.pollId === selectedPollData?.id,
-    );
-  }, [userAnswers, selectedPollData?.id]);
+    if (!selectedPollData || !userAnswers) return false;
+    return userAnswers.some((answer) => answer.pollId === selectedPollData.id);
+  }, [selectedPollData, userAnswers]);
 
-  console.log("selectedPollData", selectedPollData);
+  // console.log("selectedPollData", selectedPollData);
+
+  const [showVoteDialog, setShowVoteDialog] = useState(false);
+  const [voteDialogComment, setVoteDialogComment] = useState("");
+  const [selectedVote, setSelectedVote] = useState<string | null>(null);
 
   const handleVote = (optionIndex: 0 | 1) => {
-    // setPoll((prevPoll) => {
-    //   const newVotes = [...prevPoll.votes];
-    //   newVotes[optionIndex]!++;
-    //   return {
-    //     ...prevPoll,
-    //     votes: newVotes as [number, number],
-    //     userVoted: optionIndex,
-    //   };
-    // });
-    // setShowRandomComment(true);
-    // selectRandomComment(optionIndex);
+    setSelectedVote(selectedPollData?.options[optionIndex] ?? "");
+    answerPollMutation(selectedPollData?.options[optionIndex] ?? "");
   };
 
-  const selectRandomComment = (votedOption: 0 | 1) => {
-    // const oppositeComments = poll.comments.filter(
-    //   (comment) => comment.userVote !== votedOption,
-    // );
-    // if (oppositeComments.length > 0) {
-    //   const randomIndex = Math.floor(Math.random() * oppositeComments.length);
-    //   setRandomComment(oppositeComments[randomIndex]!);
-    // } else {
-    //   setRandomComment(null);
-    // }
+  // Define a type for the mutation parameters
+  type CommentMutationParams = {
+    comment: string;
+    threadId?: string;
+    threadPosition?: number;
+  };
+
+  const { mutate: postCommentMutation } = useMutation({
+    mutationKey: ["postComment"],
+    mutationFn: ({
+      comment,
+      threadId,
+      threadPosition,
+    }: CommentMutationParams) => {
+      console.log("Submitting comment:", {
+        content: comment,
+        userId,
+        pollId: selectedPollData?.id,
+        threadId,
+        threadPosition,
+      });
+      return postComment(
+        comment,
+        userId!,
+        selectedPollData?.id ?? "",
+        threadId,
+      );
+    },
+    onSuccess: (data) => {
+      console.log("Comment posted successfully:", data);
+      void queryClient.invalidateQueries({ queryKey: ["pollThreads"] });
+      void queryClient.invalidateQueries({ queryKey: ["poll"] });
+      setReplyToRandom("");
+      setShowRandomComment(false);
+      setShowVoteDialog(false);
+    },
+    onError: (error) => {
+      console.error("Error posting comment:", error);
+    },
+  });
+
+  const handleVoteDialogSubmit = (isJoinDiscussion: boolean) => {
+    if (isJoinDiscussion) {
+      if (leastRepliedThread) {
+        console.log("Setting random comment:", leastRepliedThread);
+        setRandomComment(leastRepliedThread);
+        setShowRandomComment(true);
+      } else {
+        console.log("No least replied thread found");
+      }
+    } else {
+      if (voteDialogComment.trim()) {
+        postCommentMutation({ comment: voteDialogComment });
+        setVoteDialogComment("");
+        setShowVoteDialog(false);
+      }
+    }
   };
 
   const handleReplyToRandom = () => {
-    // if (randomComment && replyToRandom.trim()) {
-    //   setPoll((prevPoll) => ({
-    //     ...prevPoll,
-    //     comments: prevPoll.comments.map((comment) =>
-    //       comment.id === randomComment.id
-    //         ? {
-    //             ...comment,
-    //             replies: [
-    //               ...comment.replies,
-    //               {
-    //                 id: Date.now().toString(),
-    //                 text: replyToRandom.trim(),
-    //                 likes: 0,
-    //                 userLiked: false,
-    //                 userVote: poll.userVoted,
-    //                 replies: [],
-    //               },
-    //             ],
-    //           }
-    //         : comment,
-    //     ),
-    //   }));
-    // setReplyToRandom("");
-    // setShowRandomComment(false);
-    // setTimeout(() => {
-    //   randomCommentRef.current?.scrollIntoView({ behavior: "smooth" });
-    // }, 100);
+    if (randomComment && replyToRandom.trim()) {
+      postCommentMutation({
+        comment: replyToRandom,
+        threadId: randomComment.threadId,
+        threadPosition: randomComment.threadPosition + 1,
+      });
+    }
   };
-  // }
 
   const handleSkipRandom = () => {
-    // setShowRandomComment(false);
+    setShowRandomComment(false);
   };
 
   const handleAddComment = () => {
-    addComment(newComment);
-    setNewComment("");
+    if (newComment.trim()) {
+      postCommentMutation({ comment: newComment });
+      setNewComment("");
+    }
   };
 
   const handleLikeComment = (commentId: string) => {
@@ -281,7 +501,14 @@ export default function PollDetail() {
   };
 
   const handleReply = (commentId: string, replyText: string) => {
-    // Type-safe comment handling would go here
+    // Get the thread ID from the comment we're replying to
+    const threadId = Object.entries(pollThreads ?? {}).find(([_, comments]) =>
+      comments.some((comment) => comment.id === commentId),
+    )?.[0];
+
+    if (threadId) {
+      postCommentMutation({ comment: replyText, threadId });
+    }
   };
 
   const addReply = (comments: Comment[], id: string, replyText: string) => {
@@ -323,7 +550,7 @@ export default function PollDetail() {
       (answer) => answer.answer === b,
     ).length;
     return [aVotes, bVotes];
-  }, [selectedPollData?.answers, selectedPollData?.options]);
+  }, [selectedPollData]);
 
   const percentages = useMemo(() => {
     if (!selectedPollData) return [0, 0];
@@ -337,7 +564,19 @@ export default function PollDetail() {
     const bPercentage = bVotes ? (bVotes / totalVotes) * 100 : 0;
 
     return [aPercentage, bPercentage];
-  }, [voteCounts, selectedPollData?.answers.length, selectedPollData?.options]);
+  }, [selectedPollData, voteCounts]);
+
+  // Add this query for real comments
+  const { data: realComments } = useQuery({
+    queryKey: ["comments", id],
+    queryFn: () => fetchUserComments(selectedPollData?.id ?? ""),
+    enabled: !!selectedPollData?.id,
+  });
+
+  // Add a useEffect to monitor the randomComment state
+  useEffect(() => {
+    console.log("Random comment updated:", randomComment);
+  }, [randomComment]);
 
   if (!selectedPollData) {
     return <div>Loading...</div>;
@@ -349,7 +588,8 @@ export default function PollDetail() {
       <div className="container mx-auto max-w-4xl px-4 py-6">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center text-blue-500 hover:text-blue-600"
+          prefetch
+          className="mb-6 inline-flex items-center text-primary hover:text-primary/80"
         >
           &larr; <span className="ml-2">Back to Polls</span>
         </Link>
@@ -371,6 +611,7 @@ export default function PollDetail() {
                 <div className="grid grid-cols-2 gap-4">
                   {selectedPollData.options.map((option, index) => (
                     <Button
+                      disabled={userAnswered}
                       key={option}
                       onClick={() => handleVote(index as 0 | 1)}
                       className="h-14 w-full text-lg"
@@ -400,6 +641,12 @@ export default function PollDetail() {
                     </div>
                   </div>
                 ))}
+                <Button
+                  onClick={() => setShowVoteDialog(true)}
+                  className="mt-4 bg-gray-200 text-gray-700 hover:bg-gray-300"
+                >
+                  Debug: Open Discussion Dialog
+                </Button>
               </div>
             )}
           </div>
@@ -417,29 +664,167 @@ export default function PollDetail() {
 
           {/* Comments list */}
           <div className="space-y-4">
-            {selectedPollData?.comments?.length > 0 ? (
-              selectedPollData.comments.map((comment) => (
-                <CommentItem
-                  key={comment.id}
-                  comment={comment}
-                  onLike={handleLikeComment}
-                  onReply={handleReply}
-                  pollOptions={selectedPollData.options}
-                  isRandom={comment.id === randomComment?.id}
-                  randomCommentRef={randomCommentRef}
-                />
-              ))
-            ) : (
-              <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-                <MessageSquare className="mx-auto mb-3 h-8 w-8 text-gray-400" />
-                <p className="text-gray-500">
-                  No comments yet. Be the first to share your thoughts!
-                </p>
-              </div>
-            )}
+            {pollThreads &&
+              Object.entries(pollThreads).map(([threadId, comments]) => {
+                // First find root comments (threadPosition === 0)
+                const rootComments = comments.filter(
+                  (c) => c.threadPosition === 0,
+                );
+
+                // Then find replies for each root comment
+                const commentWithReplies = rootComments.map((rootComment) => {
+                  const replies = comments
+                    .filter(
+                      (c) => c.threadPosition > 0 && c.threadId === threadId,
+                    )
+                    .sort((a, b) => a.threadPosition - b.threadPosition);
+
+                  return { rootComment, replies };
+                });
+
+                return (
+                  <div key={threadId} className="space-y-4">
+                    {commentWithReplies.map(({ rootComment, replies }) => (
+                      <div key={rootComment.id}>
+                        <CommentItem
+                          comment={rootComment}
+                          onLike={handleLikeComment}
+                          onReply={handleReply}
+                          pollOptions={
+                            selectedPollData?.options ?? ["Yes", "No"]
+                          }
+                          isRandom={rootComment.id === randomComment?.id}
+                          randomCommentRef={randomCommentRef}
+                          depth={0}
+                        />
+                        {replies.length > 0 && (
+                          <div className="mt-4 space-y-4">
+                            {replies.map((reply) => (
+                              <CommentItem
+                                key={reply.id}
+                                comment={reply}
+                                onLike={handleLikeComment}
+                                onReply={handleReply}
+                                pollOptions={
+                                  selectedPollData?.options ?? ["Yes", "No"]
+                                }
+                                isRandom={reply.id === randomComment?.id}
+                                randomCommentRef={randomCommentRef}
+                                depth={reply.threadPosition}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
           </div>
         </div>
       </div>
+
+      <Dialog open={showVoteDialog} onOpenChange={setShowVoteDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
+                <MessageCircle className="h-6 w-6 text-primary" />
+                Share Your Perspective
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-base text-gray-600">
+              Would you like to explain why you voted {selectedVote}?
+            </DialogDescription>
+          </DialogHeader>
+
+          {!showRandomComment ? (
+            <div className="grid gap-4 py-4">
+              <AnimatePresence>
+                {voteDialogComment && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Textarea
+                      placeholder="Share your thoughts..."
+                      value={voteDialogComment}
+                      onChange={(e) => setVoteDialogComment(e.target.value)}
+                      className="min-h-[120px] w-full rounded-lg border border-amber-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={() => {
+                    if (voteDialogComment) {
+                      handleVoteDialogSubmit(false);
+                    } else {
+                      setVoteDialogComment(" "); // Add a space to trigger textarea appearance
+                    }
+                  }}
+                  className="h-14 w-full text-lg font-medium transition-colors hover:opacity-90"
+                  style={{
+                    backgroundColor: THEME_COLORS.optionA.bgDark,
+                    color: THEME_COLORS.optionA.text,
+                  }}
+                >
+                  {voteDialogComment ? "Submit Comment" : "Leave a Comment"}
+                </Button>
+                <Button
+                  onClick={() => handleVoteDialogSubmit(true)}
+                  className="h-14 w-full text-lg font-medium transition-colors hover:opacity-90"
+                  style={{
+                    backgroundColor: THEME_COLORS.optionB.bgDark,
+                    color: THEME_COLORS.optionB.text,
+                  }}
+                >
+                  Join Discussion!
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-4 py-4">
+              <div className="rounded-lg bg-amber-50 p-4">
+                <p className="mb-2 text-sm text-gray-600">Reply to:</p>
+                <p className="text-gray-800">{randomComment?.content}</p>
+              </div>
+              <Textarea
+                placeholder="Write your reply..."
+                value={replyToRandom}
+                onChange={(e) => setReplyToRandom(e.target.value)}
+                className="min-h-[120px] w-full rounded-lg border border-amber-200 bg-gray-50 p-4 text-gray-800 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={() => setShowRandomComment(false)}
+                  className="h-14 transition-colors hover:opacity-90"
+                  style={{
+                    backgroundColor: THEME_COLORS.optionA.bgDark,
+                    color: THEME_COLORS.optionA.text,
+                  }}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleReplyToRandom}
+                  className="h-14 transition-colors hover:opacity-90"
+                  disabled={!replyToRandom.trim()}
+                  style={{
+                    backgroundColor: THEME_COLORS.optionB.bgDark,
+                    color: THEME_COLORS.optionB.text,
+                  }}
+                >
+                  Post Reply
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -454,46 +839,81 @@ interface CommentItemProps {
   depth?: number;
 }
 
+// Update CommentItem to handle nested replies
 function CommentItem({
   comment,
   onLike,
   onReply,
+  pollOptions,
   isRandom,
   randomCommentRef,
   depth = 0,
 }: CommentItemProps) {
   const [replyText, setReplyText] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
+  const [localLikes, setLocalLikes] = useState(0);
+  const [hasLiked, setHasLiked] = useState(false);
+
+  // Determine which option color to use
+  const isOptionA = comment.pollAnswer === pollOptions[0];
+  const voteColor = isOptionA ? THEME_COLORS.optionA : THEME_COLORS.optionB;
 
   return (
     <div
-      className={`${depth > 0 ? "ml-6 border-l-2 border-gray-100 pl-6" : ""}`}
+      className={`${depth > 0 ? "ml-6 border-l-2 border-amber-200 pl-6" : ""}`}
       ref={isRandom ? randomCommentRef : undefined}
     >
-      <div className="rounded-lg bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-md">
-        <p className="mb-3 text-gray-800">{comment.content}</p>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-amber-600">Voted: {comment.pollAnswer}</span>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onLike(comment.id)}
-              className="text-gray-500 hover:text-blue-500"
+      <div
+        className={`rounded-lg p-5 shadow-sm transition-shadow duration-300 hover:shadow-md ${depth === 0 ? "bg-white" : ""} ${depth === 1 ? "bg-amber-50" : ""} ${depth === 2 ? "bg-amber-100/30" : ""} `}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              style={{
+                backgroundColor: voteColor.bg,
+                color: voteColor.text,
+              }}
+              className="rounded-full px-4 py-1.5 text-sm font-medium shadow-sm"
             >
-              <ThumbsUp className="mr-2 h-4 w-4" />
-              Like
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowReplyInput(!showReplyInput)}
-              className="text-gray-500 hover:text-blue-500"
-            >
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Reply
-            </Button>
+              Voted {comment.pollAnswer}
+            </div>
+            <span className="text-sm text-gray-500">
+              {new Date(comment.createdAt).toLocaleTimeString()}
+            </span>
           </div>
+        </div>
+
+        <p className="mb-4 text-gray-800">{comment.content}</p>
+
+        <div className="flex items-center justify-end gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (!hasLiked) {
+                setLocalLikes((prev) => prev + 1);
+                setHasLiked(true);
+                onLike(comment.id);
+              }
+            }}
+            className={`${
+              hasLiked
+                ? "text-amber-600 hover:text-amber-700"
+                : "text-gray-500 hover:text-amber-600"
+            }`}
+          >
+            <ThumbsUp className="mr-2 h-4 w-4" />
+            {localLikes} {localLikes === 1 ? "Like" : "Likes"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowReplyInput(!showReplyInput)}
+            className="text-gray-500 hover:text-amber-600"
+          >
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Reply
+          </Button>
         </div>
 
         {showReplyInput && (
@@ -502,7 +922,7 @@ function CommentItem({
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
-              className="flex-1"
+              className="flex-1 border-amber-200 focus:border-amber-500 focus:ring-amber-200"
             />
             <Button
               onClick={() => {
@@ -512,7 +932,7 @@ function CommentItem({
                   setShowReplyInput(false);
                 }
               }}
-              className="px-6"
+              className="bg-amber-500 px-6 hover:bg-amber-600"
             >
               <Send className="h-4 w-4" />
             </Button>

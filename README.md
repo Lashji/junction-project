@@ -1,29 +1,62 @@
-# Create T3 App
+# Quorum - Digital Democracy Platform
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+## Overview
+Quorum is a hackathon project created for Junction 2024, designed to enable secure, transparent, and authentic participation in online voting and discussions. Our platform combines robust identity verification with privacy-preserving technology to ensure genuine democratic engagement while maintaining user privacy.
 
-## What's next? How do I make an app with this?
+## Core Features
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+### 🔐 Secure Identity Verification
+- Bank-based strong authorization for establishing unique digital identities
+- Zero-knowledge proofs for privacy-preserving authentication
+- One-person-one-vote integrity through combined approach:
+  - Browser fingerprinting for anonymous user identification
+  - W3C Verifiable Credentials for strong authentication
+  - Decentralized Identifiers (DIDs) for identity management
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+### 🗳️ Democratic Participation
+- Create and participate in community polls
+- Engage in meaningful discussions
+- Demographic-based voting with privacy-preserving ZK proofs
+  - Filter participation based on verified attributes
+  - Maintain complete privacy of user data
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+### 🛡️ Privacy & Security
+- Personal information remains encrypted on user devices
+- Anonymous voting while maintaining authenticity
+- Bot-free environment through multi-layer verification
 
-## Learn More
+## Technical Stack
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+### Frontend
+- Next.js 15.0
+- TypeScript
+- TailwindCSS with ShadcnUI components
+- Framer Motion for animations
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+### Identity & Verification
+- [PolygonID Verifier Backend](https://github.com/0xPolygonID/verifier-backend) for credential verification
+- [PolygonID Issuer Node](https://github.com/0xPolygonID/issuer-node) for credential issuance
+- FingerprintJS Pro for device fingerprinting
+- Polygon ID integration for identity verification
+- Signicat Bank ID verification using FTN (Finnish Trust Network) 
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+### Backend Services
+- FastAPI Python backend for core functionality
+- Backend repository https://github.com/ink-waffle/QuorumBackend
+- PostgreSQL for data persistence
+- Redis for caching
+- Custom authentication system
 
-## How do I deploy this?
+## Live Demo
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+Experience Quorum in action at [junction-project-dbun.vercel.app](https://junction-project-dbun.vercel.app/)
+
+Key features you can try:
+- Secure bank-based identity verification
+- Zero-knowledge credential issuance
+- Privacy-preserving participation in polls
+- Anonymous but verified discussions
+
+Note: Bank ID verification currently supports Finnish bank credentials through the FTN network.
+
+Another note: Issuer and verifier might not work on the live demo as they are hosted/tunneled from local network currently and there might be downtimes.
