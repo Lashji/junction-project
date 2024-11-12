@@ -273,6 +273,8 @@ export default function Polls() {
 
   return (
     <div>
+        <p className="text-center -mb-5">Welcome back, user 91a2k29</p>
+
       <h1 className="content-2xl h1class mb-4 text-center text-4xl font-bold">
         Ongoing Polls
       </h1>
